@@ -6,6 +6,13 @@ import av
 from pathlib import Path
 import cv2
 
+# Handle different PyAV versions
+try:
+    AVError = av.AVError
+except AttributeError:
+    # Fallback for newer PyAV versions where AVError might not exist
+    AVError = Exception
+
 class BaseDeviceManager(ABC):
     """Abstract base class for device management."""
     
@@ -90,7 +97,7 @@ class WindowsDeviceManager(BaseDeviceManager):
                 container = av.open(device, format="dshow")
                 container.close()
                 return True
-            except av.AVError:
+            except (AVError, Exception):
                 return False
                 
         except Exception as e:

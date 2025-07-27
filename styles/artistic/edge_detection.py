@@ -7,6 +7,8 @@ class EdgeDetection(Style):
     """
     name = "Edge Detection"
     category = "Artistic"
+    variants = ["Standard"]  # Add a default variant
+    default_variant = "Standard"
     parameters = [
         {
             "name": "threshold1",
@@ -58,4 +60,7 @@ class EdgeDetection(Style):
 
         # Apply Canny edge detection
         edges = cv2.Canny(gray, threshold1, threshold2)
-        return edges
+        
+        # Convert back to BGR for consistency with other styles
+        edges_bgr = cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
+        return edges_bgr
