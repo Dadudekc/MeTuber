@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-MeTuber V2 - Professional Webcam Effects Studio
+Dreamscape V2 - Professional Webcam Effects Studio
 A next-generation interface designed to rival OBS Studio
 """
 
@@ -337,7 +337,7 @@ class ProfessionalV2MainWindow(QMainWindow):
     
     def init_ui(self):
         """Initialize the professional user interface."""
-        self.setWindowTitle("Dream.OS Stream Software (Open Source)")
+        self.setWindowTitle("Dreamscape Stream Software (Open Source)")
         self.setGeometry(50, 50, 1800, 1100)  # Increased window size to prevent overlap
         
         # Create central widget with main preview
@@ -432,7 +432,7 @@ class ProfessionalV2MainWindow(QMainWindow):
         preview_layout = QVBoxLayout(self.preview_frame)
         
         # Simple video label for preview (replacing complex graphics view)
-        self.video_label = QLabel("Dream.OS Stream Software (Open Source)")
+        self.video_label = QLabel("Dreamscape Stream Software (Open Source)")
         self.video_label.setAlignment(Qt.AlignCenter)
         self.video_label.setMinimumSize(800, 600)
         self.video_label.setStyleSheet("""
@@ -1288,7 +1288,7 @@ class ProfessionalV2MainWindow(QMainWindow):
             # Help menu
         help_menu = menubar.addMenu("Help")
         
-        about_action = QAction("About MeTuber V2", self)
+        about_action = QAction("About Dreamscape V2", self)
         help_menu.addAction(about_action)
         
         help_action = QAction("Documentation", self)
@@ -2613,7 +2613,7 @@ class ProfessionalV2MainWindow(QMainWindow):
 def main():
     """Main function to run the professional V2 application."""
     app = QApplication(sys.argv)
-    app.setApplicationName("MeTuber V2 Professional")
+    app.setApplicationName("Dreamscape V2 Professional")
     app.setApplicationVersion("2.0.0")
     
     window = ProfessionalV2MainWindow()

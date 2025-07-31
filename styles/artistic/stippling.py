@@ -39,25 +39,16 @@ class Stippling(Style):
         """
         return self.parameters
 
-    def apply(self, image, params=None):
-        if params is None:
-            params = self.default_params
-        params = self.validate_params(params)
-
-        dot_density = params["dot_density"]
-        contrast = params["contrast_adjustment"]
-
+    def apply(self, image, params: dict) -> np.ndarray:
+        """
+        Apply stippling effect to the image.
+        """
         # Convert to grayscale
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-        # Increase contrast
-        gray = cv2.convertScaleAbs(gray, alpha=contrast, beta=0)
+        # Apply stippling effect
+        stippled = cv2.adaptiveThreshold(
+            gray, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 11, 2
+        )
 
-        # Create stippled effect
-        stippled = np.zeros_like(gray)
-        for y in range(0, gray.shape[0], dot_density):
-            for x in range(0, gray.shape[1], dot_density):
-                if gray[y, x] > 128:  # Threshold for dot placement
-                    stippled[y:y + dot_density, x:x + dot_density] = 255
-
-        return stippled
+        return cv2.cvtColor(stippled, cv2.COLOR_GRAY2BGR)

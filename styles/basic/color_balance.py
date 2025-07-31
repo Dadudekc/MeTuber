@@ -42,13 +42,7 @@ class ColorBalance(Style):
         },
     ]
 
-    def define_parameters(self):
-        """
-        Returns the parameter definitions for color balance adjustment.
-        """
-        return self.parameters
-
-    def apply(self, image, params=None):
+    def apply(self, image, params: dict) -> np.ndarray:
         """
         Adjusts the color balance of the image.
 

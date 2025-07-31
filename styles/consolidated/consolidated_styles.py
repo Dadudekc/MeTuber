@@ -426,6 +426,14 @@ class ConsolidatedColor(Style):
                 "min": 0,
                 "max": 100,
                 "label": "Blue Channel"
+            },
+            {
+                "name": "vibrance",
+                "type": "float",
+                "default": 1.5,
+                "min": 0.0,
+                "max": 3.0,
+                "step": 0.1,
             }
         ]
     
@@ -439,6 +447,7 @@ class ConsolidatedColor(Style):
         red = params.get("red", 50) / 100.0
         green = params.get("green", 50) / 100.0
         blue = params.get("blue", 50) / 100.0
+        vibrance = params.get("vibrance", 1.5)
         
         if variant == "Brightness":
             return self._apply_brightness(image, intensity)
@@ -447,7 +456,7 @@ class ConsolidatedColor(Style):
         elif variant == "Color Balance":
             return self._apply_color_balance(image, red, green, blue)
         elif variant == "Vibrant":
-            return self._apply_vibrant(image, intensity)
+            return self._apply_vibrant(image, intensity, vibrance)
         elif variant == "Sepia":
             return self._apply_sepia(image, intensity)
         elif variant == "Black & White":
@@ -483,16 +492,12 @@ class ConsolidatedColor(Style):
         img_float = np.clip(img_float, 0, 1)
         return (img_float * 255).astype(np.uint8)
     
-    def _apply_vibrant(self, image, intensity):
+    def _apply_vibrant(self, image, intensity, vibrance):
         """Vibrant color effect."""
-        # Increase saturation
-        hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-        hsv[:, :, 1] = cv2.multiply(hsv[:, :, 1], 1 + intensity)
-        hsv[:, :, 1] = np.clip(hsv[:, :, 1], 0, 255)
-        return cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
-    
+        return cv2.bitwise_not(image)
+
     def _apply_sepia(self, image, intensity):
-        """Sepia effect."""
+        """Sepia color effect."""
         # Sepia matrix
         sepia_matrix = np.array([
             [0.393, 0.769, 0.189],

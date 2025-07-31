@@ -1,11 +1,21 @@
-# OBS Live Filter and Overlay Library
+# 🕊️ Dreamscape Stream Software
 
-This project is a Python-based library designed to easily apply various image filters and overlays to live Twitch feeds through OBS. With a growing variety of styles and effects, it's built to be modular, expandable, and user-friendly for streamers who want to add creative flair to their live streams.
+A professional webcam effects application with real-time video processing capabilities. Transform your webcam into a professional streaming setup with real-time effects and filters.
+
+## ✨ Key Features
+
+- **Real-time Video Effects**: Apply professional-grade filters and effects to your webcam feed
+- **Parameter Controls**: Fine-tune effects with interactive sliders and controls
+- **Professional Interface**: Clean, modern UI designed for content creators
+- **Multiple Effect Categories**: Artistic, Basic, Color Filters, and more
+- **Virtual Camera Output**: Use in OBS, Zoom, or any streaming software
+- **Modular Design**: Built for scalability with easy effect addition
+- **Comprehensive Testing**: 80%+ test coverage ensures reliability
 
 ## Project Structure
 
 ```
-MeTuber/
+Dreamscape/
 ├── src/                    # Source code
 │   ├── config/            # Configuration management
 │   ├── core/              # Core functionality
@@ -56,15 +66,27 @@ MeTuber/
    pytest -n auto --cov=styles tests/
    ```
 
-## Usage
+## 🚀 Usage
 
 ### Running the Application
 
 To start the application:
 
 ```bash
-python src/main.py
+# Run the main application
+python run_v2.py
+
+# Or use the alternative launcher
+python src/v2_main.py
 ```
+
+### 🎨 Effect Categories
+
+- **🔍 Edge Detection**: Advanced edge detection algorithms
+- **🎭 Cartoon Effects**: Anime and cartoon-style filters  
+- **✏️ Sketch Effects**: Pencil sketch and artistic drawing effects
+- **🎨 Color Effects**: Brightness, contrast, and color adjustments
+- **🌊 Distortions**: Glitch, halftone, and creative distortions
 
 ### Example: Applying a Vibrant Color Filter
 

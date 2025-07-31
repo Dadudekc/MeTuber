@@ -163,7 +163,7 @@ Thumbs.db
 *.log
 
 # Ignore Python egg-info metadata
-MeTuber.egg-info/
+Dreamscape.egg-info/
 
 # Ignore compiled Python files
 __pycache__/

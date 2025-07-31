@@ -60,9 +60,7 @@ class LineArt(Style):
 
         # Convert to grayscale
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-        # Apply edge detection
-        edges = cv2.Canny(gray, t1, t2, apertureSize=aperture)
-
-        # Invert the edges to get white lines on black background
-        return cv2.bitwise_not(edges)
+        inverted = 255 - gray
+        blurred = cv2.GaussianBlur(inverted, (21, 21), 0)
+        dodged = cv2.divide(gray, 255 - blurred, scale=256)
+        return cv2.cvtColor(dodged, cv2.COLOR_GRAY2BGR)

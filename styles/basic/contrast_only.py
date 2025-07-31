@@ -15,7 +15,7 @@ class ContrastOnly(Style):
         {
             "name": "contrast",
             "type": "float",
-            "default": 1.0,
+            "default": 1.5,
             "min": 0.5,
             "max": 3.0,
             "step": 0.1,

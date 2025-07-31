@@ -1,12 +1,12 @@
-"""Package entry point for the MeTuber application.
+"""Package entry point for the Dreamscape application.
 
 This thin wrapper allows the project to be executed with either
 
-    python -m MeTuber
+    python -m Dreamscape
 
 or after installation via the console-script defined in setup.py:
 
-    metuber
+    dreamscape
 
 It simply delegates to the main() function provided by the existing
 `webcam_filter_pyqt5.py` module so that we avoid duplicating startup
@@ -20,16 +20,16 @@ from typing import NoReturn
 
 def _get_webcam_module() -> ModuleType:
     """Import the webcam GUI module lazily to avoid heavy imports at start-up."""
-    return import_module("MeTuber.webcam_filter_pyqt5")
+    return import_module("Dreamscape.webcam_filter_pyqt5")
 
 
 def main() -> NoReturn:  # pragma: no cover – thin wrapper
-    """Run the MeTuber QT application."""
+    """Run the Dreamscape QT application."""
     webcam_module = _get_webcam_module()
     if hasattr(webcam_module, "main"):
         webcam_module.main()  # type: ignore[func-returns-value]
     else:
-        raise RuntimeError("Expected 'main' function in MeTuber.webcam_filter_pyqt5")
+        raise RuntimeError("Expected 'main' function in Dreamscape.webcam_filter_pyqt5")
 
 
 if __name__ == "__main__":

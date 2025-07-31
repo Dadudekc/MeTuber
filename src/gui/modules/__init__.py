@@ -1,5 +1,5 @@
 """
-GUI Modules Package for MeTuber V2 Professional
+GUI Modules Package for Dreamscape V2 Professional
 
 This package contains modularized components of the main window,
 organized by functionality while preserving the exact UI appearance.

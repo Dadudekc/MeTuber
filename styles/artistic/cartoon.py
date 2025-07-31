@@ -12,7 +12,7 @@ class Cartoon(Style):
 
     def __init__(self):
         super().__init__()
-        self.name = "Cartoon"
+        self.name = "Cartoon (Detailed)"
         self.category = "Artistic"
 
     def define_parameters(self):

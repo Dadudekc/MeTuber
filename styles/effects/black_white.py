@@ -43,9 +43,12 @@ class BlackWhite(Style):
         # Retrieve the threshold value
         threshold = params.get("threshold", 128)
 
-        # Convert image to grayscale
+        # Convert to grayscale
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-        # Apply binary thresholding
-        _, bw = cv2.threshold(gray, threshold, 255, cv2.THRESH_BINARY)
-        return bw
+        # Apply thresholding
+        _, black_and_white = cv2.threshold(
+            gray, threshold, 255, cv2.THRESH_BINARY
+        )
+
+        return cv2.cvtColor(black_and_white, cv2.COLOR_GRAY2BGR)

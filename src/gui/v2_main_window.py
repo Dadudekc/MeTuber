@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-MeTuber V2 - Professional Webcam Effects Studio (Modular Version)
+Dreamscape V2 - Professional Webcam Effects Studio (Modular Version)
 A next-generation interface designed to rival OBS Studio
 """
 
@@ -32,9 +32,15 @@ class ProfessionalV2MainWindow(QMainWindow):
     stop_processing = pyqtSignal()
     effect_applied = pyqtSignal(str)
     
-    def __init__(self):
+    def __init__(self, plugin_manager=None):
         super().__init__()
         self.logger = logging.getLogger(__name__)
+        logging.basicConfig(level=logging.DEBUG)
+        
+        self.logger.debug("Initializing ProfessionalV2MainWindow...")
+        
+        # Store plugin manager
+        self.plugin_manager = plugin_manager
         
         # Initialize state variables
         self.is_processing = False
@@ -46,23 +52,38 @@ class ProfessionalV2MainWindow(QMainWindow):
         self.pending_style = None
         self.pending_params = {}  # Ensure this is always a dictionary
         
+        self.logger.debug("Initializing managers...")
         # Initialize all managers
         self.init_managers()
+        self.logger.debug("Managers initialized.")
         
         # Setup UI using UI Components manager
+        self.logger.debug("Setting up professional theme...")
         self.ui_components.setup_professional_theme()
+        self.logger.debug("Theme set up.")
+        
+        self.logger.debug("Initializing UI...")
         self.init_ui()
+        self.logger.debug("UI initialized.")
         
         # Expose UI components after UI is initialized
+        self.logger.debug("Exposing UI components...")
         self._expose_ui_components()
+        self.logger.debug("UI components exposed.")
         
+        self.logger.debug("Setting up connections...")
         self.setup_connections()
+        self.logger.debug("Connections set up.")
         
         # Pre-load everything for instant startup
+        self.logger.debug("Pre-loading everything...")
         self.pre_load_everything()
+        self.logger.debug("Pre-loading complete.")
         
         # Hide old parameter controls by default - using embedded widgets instead
+        self.logger.debug("Hiding old parameter controls...")
         self.parameter_manager.hide_old_parameter_controls()
+        self.logger.debug("Old parameter controls hidden.")
         
         self.logger.info("Professional V2 Main Window (Modular) initialized successfully!")
         
@@ -91,6 +112,14 @@ class ProfessionalV2MainWindow(QMainWindow):
         # Initialize Widget Manager
         self.widget_manager = WidgetManager(self)
         
+        # Initialize AI parameter optimizer
+        from .modules.ai_parameter_optimizer import AIParameterOptimizer
+        self.ai_optimizer = AIParameterOptimizer()
+        
+        # Integrate plugin system if available
+        if self.plugin_manager:
+            self.integrate_plugin_system()
+        
         # Store manager references for easy access
         self.managers = {
             'ui_components': self.ui_components,
@@ -103,6 +132,45 @@ class ProfessionalV2MainWindow(QMainWindow):
         }
         
         self.logger.info("All manager modules initialized!")
+    
+    def integrate_plugin_system(self):
+        """Integrate the plugin system with existing managers."""
+        self.logger.info("Integrating plugin system...")
+        
+        try:
+            # Get all available effects from plugin system
+            plugin_effects = self.plugin_manager.get_all_effects()
+            
+            # Add plugin effects to effect manager
+            for effect in plugin_effects:
+                self.effect_manager.add_plugin_effect(effect)
+            
+            # Setup plugin parameter handling
+            self.setup_plugin_parameter_handling()
+            
+            self.logger.info(f"Integrated {len(plugin_effects)} plugin effects")
+            
+        except Exception as e:
+            self.logger.error(f"Failed to integrate plugin system: {e}")
+    
+    def setup_plugin_parameter_handling(self):
+        """Setup parameter handling for plugin effects."""
+        if not self.plugin_manager:
+            return
+        
+        # Connect plugin parameter changes to main window
+        def on_plugin_parameter_changed(effect_name, param_name, value):
+            self.logger.debug(f"Plugin parameter changed: {effect_name}.{param_name} = {value}")
+            
+            # Update current effect parameters
+            if self.plugin_manager.current_effect:
+                self.plugin_manager.set_parameter(param_name, value)
+            
+            # Trigger preview update
+            self.preview_manager.update_preview()
+        
+        # Store the callback for later use
+        self.plugin_parameter_callback = on_plugin_parameter_changed
     
     def _expose_ui_components(self):
         """Expose UI components from UIComponents manager for compatibility."""
@@ -121,13 +189,14 @@ class ProfessionalV2MainWindow(QMainWindow):
         
     def init_ui(self):
         """Initialize the professional user interface using UI Components manager."""
-        self.setWindowTitle("Dream.OS Stream Software (Open Source)")
+        self.setWindowTitle("Dreamscape Stream Software (Open Source)")
         self.setGeometry(50, 50, 1800, 1100)
         
         # Create all UI components using UI Components manager
         self.ui_components.create_central_preview()
         self.ui_components.create_effects_dock()
         self.ui_components.create_controls_dock()
+        self.ui_components.create_audio_captioner_dock()
         self.ui_components.create_properties_dock()
         self.ui_components.create_timeline_dock()
         self.ui_components.create_menu_bar()
@@ -144,24 +213,68 @@ class ProfessionalV2MainWindow(QMainWindow):
         """Setup all signal connections."""
         self.logger.info("Setting up signal connections...")
         
-        # Connect UI components
+        # Connect start/stop button
         if hasattr(self, 'start_stop_btn'):
-            self.start_stop_btn.clicked.connect(self.on_start_stop_clicked)
+            self.logger.info("Connecting start_stop_btn...")
+            self.start_stop_btn.toggled.connect(self.on_start_stop_clicked)
+            self.logger.info("start_stop_btn connected successfully")
+        else:
+            self.logger.warning("start_stop_btn not found!")
+        
+        # Connect UI components
+        # Processing status indicator shows current state
+        self.logger.info("Processing status indicator active")
             
         if hasattr(self, 'snapshot_btn'):
+            self.logger.info("Connecting snapshot_btn...")
             self.snapshot_btn.clicked.connect(self.on_snapshot_clicked)
+            self.logger.info("snapshot_btn connected successfully")
+        else:
+            self.logger.warning("snapshot_btn not found!")
             
         if hasattr(self, 'reset_btn'):
+            self.logger.info("Connecting reset_btn...")
             self.reset_btn.clicked.connect(self.on_reset_clicked)
+            self.logger.info("reset_btn connected successfully")
+        else:
+            self.logger.warning("reset_btn not found!")
             
         if hasattr(self, 'fullscreen_btn'):
+            self.logger.info("Connecting fullscreen_btn...")
             self.fullscreen_btn.clicked.connect(self.on_fullscreen_clicked)
+            self.logger.info("fullscreen_btn connected successfully")
+        else:
+            self.logger.warning("fullscreen_btn not found!")
             
         if hasattr(self, 'record_btn'):
+            self.logger.info("Connecting record_btn...")
             self.record_btn.clicked.connect(self.on_record_clicked)
+            self.logger.info("record_btn connected successfully")
+        else:
+            self.logger.warning("record_btn not found!")
             
         if hasattr(self, 'stream_btn'):
+            self.logger.info("Connecting stream_btn...")
             self.stream_btn.clicked.connect(self.on_stream_clicked)
+            self.logger.info("stream_btn connected successfully")
+        else:
+            self.logger.warning("stream_btn not found!")
+            
+        # Connect AI optimization button
+        if hasattr(self, 'ai_optimization_btn'):
+            self.logger.info("Connecting ai_optimization_btn...")
+            self.ai_optimization_btn.toggled.connect(self.on_ai_optimization_toggled)
+            self.logger.info("ai_optimization_btn connected successfully")
+        else:
+            self.logger.warning("ai_optimization_btn not found!")
+            
+        # Connect virtual camera button
+        if hasattr(self, 'virtual_camera_btn'):
+            self.logger.info("Connecting virtual_camera_btn...")
+            self.virtual_camera_btn.toggled.connect(self.on_virtual_camera_toggled)
+            self.logger.info("virtual_camera_btn connected successfully")
+        else:
+            self.logger.warning("virtual_camera_btn not found!")
             
         # Connect camera controls
         if hasattr(self, 'brightness_slider'):
@@ -190,6 +303,15 @@ class ProfessionalV2MainWindow(QMainWindow):
         if hasattr(self, 'zoom_combo'):
             self.zoom_combo.currentTextChanged.connect(self.preview_manager.on_zoom_changed)
             
+        # Connect audio captioner controls
+        if (hasattr(self, 'ui_components') and 
+            hasattr(self.ui_components, 'audio_captioner_controls')):
+            
+            audio_controls = self.ui_components.audio_captioner_controls
+            audio_controls.captioner_enabled.connect(self.on_captioner_enabled)
+            audio_controls.audio_device_changed.connect(self.on_audio_device_changed)
+            audio_controls.captioner_config_changed.connect(self.on_captioner_config_changed)
+            
         # Connect effect manager signals
         # Note: effect_applied is a signal defined in the EffectManager class
         # We'll handle effect application through direct method calls instead
@@ -203,57 +325,41 @@ class ProfessionalV2MainWindow(QMainWindow):
         # Start preview immediately with minimal loading
         self.start_instant_preview_minimal()
         
-        # Load remaining components in background
-        self.load_remaining_components_async()
+        # Pre-load camera and styles in background for instant start/stop
+        self.pre_load_camera_and_styles_async()
         
         self.logger.info("Minimal pre-loading complete - starting instant preview!")
     
-    def start_instant_preview_minimal(self):
-        """Start preview with minimal loading for fastest startup."""
+    def pre_load_camera_and_styles_async(self):
+        """Pre-load camera and styles asynchronously for instant start/stop."""
         try:
-            self.logger.info("Starting instant preview with minimal loading...")
-            
-            # Initialize webcam service only (no style loading yet)
-            if hasattr(self, 'webcam_manager'):
-                self.webcam_manager.init_webcam_service()
-                
-                # Start webcam processing immediately without style
-                self.webcam_manager.start_processing_minimal()
-                
-                # Start preview immediately
-                if hasattr(self, 'preview_manager'):
-                    self.preview_manager.start_preview()
-                
-                # Update UI to show "Stop" state
-                if hasattr(self, 'start_stop_btn'):
-                    self.start_stop_btn.setText("⏹️ Stop Processing")
-                    self.start_stop_btn.setStyleSheet("""
-                        QPushButton {
-                            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                                stop:0 #aa0000, stop:1 #880000);
-                            border: 1px solid #aa0000;
-                            border-radius: 6px;
-                            font-size: 12px;
-                            font-weight: bold;
-                        }
-                        QPushButton:hover {
-                            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                                stop:0 #cc0000, stop:1 #aa0000);
-                        }
-                        QPushButton:pressed {
-                            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                                stop:0 #880000, stop:1 #660000);
-                        }
-                    """)
-                
-                # Set processing state
-                self.is_processing = True
-                
-                self.logger.info("Instant preview started successfully!")
-                self.update_status("Live preview active")
-                
+            # Use QTimer to load camera and styles after UI is shown
+            from PyQt5.QtCore import QTimer
+            timer = QTimer()
+            timer.singleShot(500, self._pre_load_camera_and_styles)
         except Exception as e:
-            self.logger.error(f"Error starting instant preview: {e}")
+            self.logger.error(f"Error setting up async camera/style loading: {e}")
+    
+    def _pre_load_camera_and_styles(self):
+        """Pre-load camera and styles in background."""
+        try:
+            self.logger.info("Pre-loading camera and styles in background...")
+            
+            # Pre-load camera (this will happen in background)
+            if hasattr(self, 'webcam_manager'):
+                self.webcam_manager.pre_load_camera_async()
+            
+            # Pre-load styles (this will happen in background)
+            if hasattr(self, 'style_manager'):
+                try:
+                    self.style_manager.pre_load_styles_lazy()
+                except Exception as e:
+                    self.logger.warning(f"Could not pre-load styles: {e}")
+            
+            self.logger.info("Background camera and style loading initiated!")
+            
+        except Exception as e:
+            self.logger.error(f"Error pre-loading camera and styles: {e}")
     
     def load_remaining_components_async(self):
         """Load remaining components asynchronously in background."""
@@ -270,9 +376,6 @@ class ProfessionalV2MainWindow(QMainWindow):
         try:
             self.logger.info("Loading remaining components in background...")
             
-            # Load styles in background (lazy loading)
-            self.style_manager.pre_load_styles_lazy()
-            
             # Pre-initialize timer
             self.preview_manager.pre_initialize_timer()
             
@@ -280,6 +383,89 @@ class ProfessionalV2MainWindow(QMainWindow):
             
         except Exception as e:
             self.logger.error(f"Error loading remaining components: {e}")
+    
+    def start_instant_preview_minimal(self):
+        """Start preview with minimal loading for fastest startup."""
+        try:
+            self.logger.info("Starting instant preview with minimal loading...")
+            
+            # Initialize webcam service only (no style loading yet)
+            if hasattr(self, 'webcam_manager'):
+                self.webcam_manager.init_webcam_service()
+                
+                # Start webcam processing immediately without style (but don't set as running)
+                self.webcam_manager.start_processing_minimal()
+                
+                # Initialize timer first, then start preview
+                if hasattr(self, 'preview_manager'):
+                    self.preview_manager.pre_initialize_timer()
+                    self.preview_manager.start_preview()
+                
+                # Ensure the main window and central widget are visible
+                self.show()
+                if hasattr(self, 'centralWidget'):
+                    central_widget = self.centralWidget()
+                    if central_widget:
+                        central_widget.setVisible(True)
+                        central_widget.show()
+                
+                # Set processing state to False initially - user must click to start
+                self.is_processing = False
+                
+                # Update UI to show "Stopped" state initially
+                if hasattr(self, 'processing_status_label'):
+                    self.processing_status_label.setText("⏸️ Preview Stopped")
+                    self.processing_status_label.setStyleSheet("""
+                        QLabel {
+                            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 #666666, stop:1 #555555);
+                            border: 1px solid #666666;
+                            border-radius: 6px;
+                            font-size: 12px;
+                            font-weight: bold;
+                            color: white;
+                            padding: 8px;
+                        }
+                    """)
+                
+                self.logger.info("Instant preview started successfully!")
+                self.update_status("Click 'Start Preview' to begin")
+                
+                # Start AI parameter optimization (disabled for performance)
+                # self.start_ai_optimization()
+                
+                # Enable virtual camera button
+                if hasattr(self, 'virtual_camera_btn'):
+                    self.virtual_camera_btn.setChecked(True)
+                    self.logger.info("Virtual camera button enabled")
+                
+        except Exception as e:
+            self.logger.error(f"Error starting instant preview: {e}")
+    
+    def start_ai_optimization(self):
+        """Start AI-powered parameter optimization."""
+        try:
+            if hasattr(self, 'ai_optimizer'):
+                self.ai_optimizer.start_continuous_optimization(
+                    self.webcam_manager, 
+                    self.parameter_manager
+                )
+                self.logger.info("🤖 AI parameter optimization started")
+                self.update_status("AI optimization active")
+            else:
+                self.logger.warning("AI optimizer not available")
+        except Exception as e:
+            self.logger.error(f"Error starting AI optimization: {e}")
+    
+    def stop_ai_optimization(self):
+        """Stop AI-powered parameter optimization."""
+        try:
+            if hasattr(self, 'ai_optimizer'):
+                self.ai_optimizer.stop_continuous_optimization()
+                self.logger.info("🤖 AI parameter optimization stopped")
+                self.update_status("AI optimization stopped")
+        except Exception as e:
+            self.logger.error(f"Error stopping AI optimization: {e}")
     
     def start_instant_preview(self):
         """Start preview immediately for instant video streaming."""
@@ -313,29 +499,24 @@ class ProfessionalV2MainWindow(QMainWindow):
                     self.current_style = default_style
                     self.pending_params = {}
                 
-                # Start preview immediately
+                # Initialize timer first, then start preview
                 if hasattr(self, 'preview_manager'):
+                    self.preview_manager.pre_initialize_timer()
                     self.preview_manager.start_preview()
                 
-                # Update UI to show "Stop" state
-                if hasattr(self, 'start_stop_btn'):
-                    self.start_stop_btn.setText("⏹️ Stop Processing")
-                    self.start_stop_btn.setStyleSheet("""
-                        QPushButton {
+                # Update UI to show "Active" state
+                if hasattr(self, 'processing_status_label'):
+                    self.processing_status_label.setText("🟢 Live Processing Active")
+                    self.processing_status_label.setStyleSheet("""
+                        QLabel {
                             background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                                stop:0 #aa0000, stop:1 #880000);
-                            border: 1px solid #aa0000;
+                                stop:0 #00aa00, stop:1 #008800);
+                            border: 1px solid #00aa00;
                             border-radius: 6px;
                             font-size: 12px;
                             font-weight: bold;
-                        }
-                        QPushButton:hover {
-                            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                                stop:0 #cc0000, stop:1 #aa0000);
-                        }
-                        QPushButton:pressed {
-                            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                                stop:0 #880000, stop:1 #660000);
+                            color: white;
+                            padding: 8px;
                         }
                     """)
                 
@@ -348,24 +529,89 @@ class ProfessionalV2MainWindow(QMainWindow):
         except Exception as e:
             self.logger.error(f"Error starting instant preview: {e}")
         
-    def on_start_stop_clicked(self):
+    def update_processing_status(self, is_active: bool):
+        """Update the processing status indicator."""
+        try:
+            if hasattr(self, 'processing_status_label'):
+                if is_active:
+                    self.processing_status_label.setText("🟢 Live Processing Active")
+                    self.processing_status_label.setStyleSheet("""
+                        QLabel {
+                            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 #00aa00, stop:1 #008800);
+                            border: 1px solid #00aa00;
+                            border-radius: 6px;
+                            font-size: 12px;
+                            font-weight: bold;
+                            color: white;
+                            padding: 8px;
+                        }
+                    """)
+                else:
+                    self.processing_status_label.setText("🔴 Processing Inactive")
+                    self.processing_status_label.setStyleSheet("""
+                        QLabel {
+                            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 #aa0000, stop:1 #880000);
+                            border: 1px solid #aa0000;
+                            border-radius: 6px;
+                            font-size: 12px;
+                            font-weight: bold;
+                            color: white;
+                            padding: 8px;
+                        }
+                    """)
+        except Exception as e:
+            self.logger.error(f"Error updating processing status: {e}")
+    
+    def on_start_stop_clicked(self, is_started: bool):
         """Handle start/stop button click."""
         try:
-            self.orchestrate_processing_toggle()
+            self.logger.info(f"=== START/STOP BUTTON CLICKED: {is_started} ===")
+            
+            if is_started:
+                # Start preview and processing
+                self.logger.info("Starting preview and processing...")
+                success = self.webcam_manager.start_processing()
+                if success:
+                    self.start_stop_btn.setText("⏹️ Stop Preview")
+                    self.update_processing_status(True)
+                    self.update_status("Preview started")
+                    self.logger.info("Preview and processing started successfully")
+                else:
+                    self.logger.error("Failed to start preview")
+                    self.start_stop_btn.setChecked(False)
+            else:
+                # Stop preview and processing
+                self.logger.info("Stopping preview and processing...")
+                self.webcam_manager.stop_processing()
+                self.start_stop_btn.setText("▶️ Start Preview")
+                self.update_processing_status(False)
+                self.update_status("Preview stopped")
+                self.logger.info("Preview and processing stopped")
+            
+            self.logger.info("=== START/STOP BUTTON HANDLER COMPLETED ===")
         except Exception as e:
-            self.logger.error(f"Error in start/stop processing: {e}")
+            self.logger.error(f"Error handling start/stop: {e}")
+            import traceback
+            self.logger.error(f"Traceback: {traceback.format_exc()}")
             
     def on_snapshot_clicked(self):
         """Handle snapshot button click."""
         try:
+            self.logger.info("=== SNAPSHOT BUTTON CLICKED ===")
             self.update_status("Snapshot captured")
             self.logger.info("Snapshot captured")
+            self.logger.info("=== SNAPSHOT BUTTON HANDLER COMPLETED ===")
         except Exception as e:
             self.logger.error(f"Error capturing snapshot: {e}")
+            import traceback
+            self.logger.error(f"Traceback: {traceback.format_exc()}")
             
     def on_reset_clicked(self):
         """Handle reset button click."""
         try:
+            self.logger.info("=== RESET BUTTON CLICKED ===")
             # Reset all parameters
             self.parameter_manager.clear_embedded_parameter_widgets()
             self.current_style = None
@@ -377,36 +623,93 @@ class ProfessionalV2MainWindow(QMainWindow):
                 
             self.update_status("All effects reset")
             self.logger.info("All effects reset")
+            self.logger.info("=== RESET BUTTON HANDLER COMPLETED ===")
             
         except Exception as e:
             self.logger.error(f"Error resetting effects: {e}")
+            import traceback
+            self.logger.error(f"Traceback: {traceback.format_exc()}")
             
     def on_fullscreen_clicked(self):
         """Handle fullscreen button click."""
         try:
+            self.logger.info("=== FULLSCREEN BUTTON CLICKED ===")
             if self.isFullScreen():
                 self.showNormal()
+                self.logger.info("Exiting fullscreen")
             else:
                 self.showFullScreen()
-            self.logger.info("Fullscreen toggled")
+                self.logger.info("Entering fullscreen")
+            self.logger.info("=== FULLSCREEN BUTTON HANDLER COMPLETED ===")
         except Exception as e:
             self.logger.error(f"Error toggling fullscreen: {e}")
+            import traceback
+            self.logger.error(f"Traceback: {traceback.format_exc()}")
             
     def on_record_clicked(self):
         """Handle record button click."""
         try:
+            self.logger.info("=== RECORD BUTTON CLICKED ===")
             self.update_status("Recording started")
             self.logger.info("Recording started")
+            self.logger.info("=== RECORD BUTTON HANDLER COMPLETED ===")
         except Exception as e:
             self.logger.error(f"Error starting recording: {e}")
+            import traceback
+            self.logger.error(f"Traceback: {traceback.format_exc()}")
             
     def on_stream_clicked(self):
         """Handle stream button click."""
         try:
+            self.logger.info("=== STREAM BUTTON CLICKED ===")
             self.update_status("Streaming started")
             self.logger.info("Streaming started")
+            self.logger.info("=== STREAM BUTTON HANDLER COMPLETED ===")
         except Exception as e:
             self.logger.error(f"Error starting stream: {e}")
+            import traceback
+            self.logger.error(f"Traceback: {traceback.format_exc()}")
+    
+    def on_ai_optimization_toggled(self, enabled: bool):
+        """Handle AI optimization toggle."""
+        try:
+            self.logger.info(f"=== AI OPTIMIZATION TOGGLED: {enabled} ===")
+            
+            if enabled:
+                # Start AI optimization
+                self.start_ai_optimization()
+                self.update_status("AI optimization enabled")
+            else:
+                # Stop AI optimization
+                self.stop_ai_optimization()
+                self.update_status("AI optimization disabled")
+            
+            self.logger.info("=== AI OPTIMIZATION TOGGLE COMPLETED ===")
+        except Exception as e:
+            self.logger.error(f"Error toggling AI optimization: {e}")
+            import traceback
+            self.logger.error(f"Traceback: {traceback.format_exc()}")
+    
+    def on_virtual_camera_toggled(self, enabled: bool):
+        """Handle virtual camera toggle."""
+        try:
+            self.logger.info(f"=== VIRTUAL CAMERA TOGGLED: {enabled} ===")
+            
+            if enabled:
+                # Virtual camera is already enabled by default in webcam service
+                self.update_status("Virtual camera enabled - use in OBS/Zoom")
+                self.logger.info("Virtual camera is active - available as 'OBS Virtual Camera'")
+            else:
+                # Note: Virtual camera is always active when webcam service is running
+                # This is just for UI feedback
+                self.update_status("Virtual camera disabled")
+                self.logger.info("Virtual camera disabled")
+            
+            self.logger.info("=== VIRTUAL CAMERA TOGGLE COMPLETED ===")
+        except Exception as e:
+            self.logger.error(f"Error toggling virtual camera: {e}")
+            import traceback
+            self.logger.error(f"Traceback: {traceback.format_exc()}")
             
     def on_camera_parameter_changed(self):
         """Handle camera parameter changes."""
@@ -448,6 +751,33 @@ class ProfessionalV2MainWindow(QMainWindow):
             self.logger.info(f"Effect applied: {effect_name}")
         except Exception as e:
             self.logger.error(f"Error handling effect application: {e}")
+    
+    def on_captioner_enabled(self, enabled: bool):
+        """Handle captioner enable/disable."""
+        try:
+            self.logger.info(f"Captioner enabled: {enabled}")
+            if enabled:
+                self.update_status("Captioner enabled - speak to see live captions!")
+            else:
+                self.update_status("Captioner disabled")
+        except Exception as e:
+            self.logger.error(f"Error handling captioner enable/disable: {e}")
+    
+    def on_audio_device_changed(self, device_index: int):
+        """Handle audio device change."""
+        try:
+            self.logger.info(f"Audio device changed to index: {device_index}")
+            self.update_status(f"Audio device changed to index: {device_index}")
+        except Exception as e:
+            self.logger.error(f"Error handling audio device change: {e}")
+    
+    def on_captioner_config_changed(self, config: dict):
+        """Handle captioner configuration changes."""
+        try:
+            self.logger.info(f"Captioner config changed: {config}")
+            self.update_status("Captioner settings updated")
+        except Exception as e:
+            self.logger.error(f"Error handling captioner config change: {e}")
             
     def get_manager(self, manager_name):
         """Get a specific manager instance."""
@@ -496,69 +826,57 @@ class ProfessionalV2MainWindow(QMainWindow):
     def orchestrate_processing_toggle(self):
         """Orchestrate processing start/stop across all managers."""
         try:
+            self.logger.info("=== ORCHESTRATE PROCESSING TOGGLE STARTED ===")
+            self.logger.info(f"Current is_processing state: {self.is_processing}")
+            
             if not self.is_processing:
-                # Start processing
-                self.logger.info("Orchestrating processing start")
+                # Start processing (instant since camera is pre-loaded)
+                self.logger.info("Orchestrating processing start (instant)")
                 self.is_processing = True
-                self.webcam_manager.start_processing()
-                self.preview_manager.start_preview()
+                self.logger.info(f"Set is_processing to: {self.is_processing}")
                 
-                # Update UI to show "Stop" state
-                if hasattr(self, 'start_stop_btn'):
-                    self.start_stop_btn.setText("⏹️ Stop Processing")
-                    self.start_stop_btn.setStyleSheet("""
-                        QPushButton {
-                            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                                stop:0 #aa0000, stop:1 #880000);
-                            border: 1px solid #aa0000;
-                            border-radius: 6px;
-                            font-size: 12px;
-                            font-weight: bold;
-                        }
-                        QPushButton:hover {
-                            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                                stop:0 #cc0000, stop:1 #aa0000);
-                        }
-                        QPushButton:pressed {
-                            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                                stop:0 #880000, stop:1 #660000);
-                        }
-                    """)
+                # Set webcam manager as running
+                if hasattr(self, 'webcam_manager'):
+                    self.webcam_manager.is_running = True
+                    self.logger.info("Set webcam_manager.is_running to True")
+                
+                # Just start preview - camera is already running
+                self.logger.info("Starting preview...")
+                self.preview_manager.start_preview()
+                self.logger.info("Preview started")
+                
+                # Update UI to show "Active" state
+                self.update_processing_status(True)
                 
                 self.update_status("Processing started")
+                self.logger.info("Status updated to 'Processing started'")
             else:
-                # Stop processing
-                self.logger.info("Orchestrating processing stop")
+                # Stop processing (instant)
+                self.logger.info("Orchestrating processing stop (instant)")
                 self.is_processing = False
-                self.webcam_manager.stop_processing()
-                self.preview_manager.stop_preview()
+                self.logger.info(f"Set is_processing to: {self.is_processing}")
                 
-                # Update UI to show "Start" state
-                if hasattr(self, 'start_stop_btn'):
-                    self.start_stop_btn.setText("▶️ Start Processing")
-                    self.start_stop_btn.setStyleSheet("""
-                        QPushButton {
-                            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                                stop:0 #00aa00, stop:1 #008800);
-                            border: 1px solid #00aa00;
-                            border-radius: 6px;
-                            font-size: 12px;
-                            font-weight: bold;
-                        }
-                        QPushButton:hover {
-                            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                                stop:0 #00cc00, stop:1 #00aa00);
-                        }
-                        QPushButton:pressed {
-                            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                                stop:0 #008800, stop:1 #006600);
-                        }
-                    """)
+                # Set webcam manager as not running
+                if hasattr(self, 'webcam_manager'):
+                    self.webcam_manager.is_running = False
+                    self.logger.info("Set webcam_manager.is_running to False")
+                
+                self.logger.info("Stopping preview...")
+                self.preview_manager.stop_preview()
+                self.logger.info("Preview stopped")
+                
+                # Update UI to show "Inactive" state
+                self.update_processing_status(False)
                 
                 self.update_status("Processing stopped")
+                self.logger.info("Status updated to 'Processing stopped'")
+                
+            self.logger.info("=== ORCHESTRATE PROCESSING TOGGLE COMPLETED ===")
                 
         except Exception as e:
             self.logger.error(f"Error orchestrating processing toggle: {e}")
+            import traceback
+            self.logger.error(f"Traceback: {traceback.format_exc()}")
     
     def on_preview_size_changed(self):
         """Handle preview size changes."""
@@ -597,6 +915,13 @@ class ProfessionalV2MainWindow(QMainWindow):
             self.preview_manager.cleanup()
             self.webcam_manager.cleanup()
             self.widget_manager.cleanup()
+            
+            # Clean up captioner
+            if (hasattr(self, 'ui_components') and 
+                hasattr(self.ui_components, 'audio_captioner_controls')):
+                audio_controls = self.ui_components.audio_captioner_controls
+                if audio_controls:
+                    audio_controls.cleanup()
             
             self.logger.info("Application closing - cleanup complete")
             event.accept()

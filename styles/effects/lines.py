@@ -109,4 +109,4 @@ class CannyEdge(Style):
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         edges = cv2.Canny(gray, threshold1, threshold2, apertureSize=apertureSize, L2gradient=True)
 
-        return edges
+        return cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)

@@ -1,5 +1,5 @@
 """
-Effect Manager Module for MeTuber V2 Professional
+Effect Manager Module for Dreamscape V2 Professional
 
 Handles all effect-related functionality including effect application,
 style management, and effect history tracking.
@@ -72,7 +72,7 @@ class EffectManager:
             """)
             
             # Connect button to effect application
-            effect_btn.clicked.connect(lambda checked, e=effect: self.apply_effect(e))
+            effect_btn.clicked.connect(lambda checked, effect_name=effect: self.apply_effect(effect_name))
             
             # Add to effects layout
             self.main_window.effects_layout.addWidget(effect_btn)
@@ -81,50 +81,29 @@ class EffectManager:
         self.main_window.effects_layout.addStretch()
         
     def apply_effect(self, effect_name):
-        """Apply an effect to the preview and embed draggable widget content into parameter panel."""
-        # Update current effect label
-        if hasattr(self.main_window, 'current_effect_label'):
-            self.main_window.current_effect_label.setText(effect_name)
-            
-        self.effects_history.append(effect_name)
-        # Note: We'll handle effect application through direct method calls instead of signals
-        self.update_status(f"Applied effect: {effect_name}")
-        
-        # HIDE THE OLD PARAMETER CONTROLS - REPLACE WITH EMBEDDED WIDGET CONTENT!
-        self.main_window.parameter_manager.hide_old_parameter_controls()
-        
-        # EMBED DRAGGABLE WIDGET CONTENT INTO THE EXISTING PARAMETER PANEL!
+        """Apply the selected effect."""
         try:
-            # Clean up the effect name (remove emojis for style lookup)
-            clean_effect_name = effect_name
-            if "🔍 Edge Detection" in effect_name:
-                clean_effect_name = "Edge Detection"
-            elif "🎭 Cartoon Effects" in effect_name:
-                clean_effect_name = "Cartoon"
-            elif "✏️ Sketch Effects" in effect_name:
-                clean_effect_name = "Sketch"
-            elif "🎨 Color Effects" in effect_name:
-                clean_effect_name = "Color Balance"
-            elif "💧 Watercolor" in effect_name:
-                clean_effect_name = "Watercolor"
-            elif "⚡ Glitch Effect" in effect_name:
-                clean_effect_name = "Glitch"
+            self.logger.info(f"🎭 APPLYING EFFECT: {effect_name}")
             
-            # Embed the widget content into the existing parameter panel
-            self.embed_widget_content_into_panel(clean_effect_name)
-            # Use clean effect name for logging to avoid emoji encoding issues
-            self.logger.info(f"Embedded widget content for: {clean_effect_name}")
+            # Load and apply the style to the webcam service (this method has proper mapping)
+            self.load_and_apply_style(effect_name)
+            
+            # Update parameter controls using the original effect name (not cleaned)
+            self.main_window.parameter_manager.update_parameter_controls(effect_name)
+            
+            self.update_status(f"Applied effect: {effect_name}")
                 
         except Exception as e:
-            self.logger.error(f"Error embedding widget content: {e}")
+            self.logger.error(f"Error applying effect: {e}")
             import traceback
             self.logger.error(f"Traceback: {traceback.format_exc()}")
-            # Show old controls as fallback
-            self.main_window.parameter_manager.show_old_parameter_controls()
-            
+        
     def embed_widget_content_into_panel(self, filter_name):
         """Embed draggable widget content into the existing parameter panel."""
         try:
+            # Clean the filter name (remove emoji)
+            clean_filter_name = filter_name.replace('🔍', '').replace('🎨', '').replace('🌊', '').replace('⚡', '').strip()
+            
             # Clear existing parameter widgets
             self.main_window.parameter_manager.clear_embedded_parameter_widgets()
             
@@ -135,12 +114,12 @@ class EffectManager:
                 from src.core.style_manager import StyleManager
                 style_manager = StyleManager()
                 
-            # Get style instance
-            style_instance = style_manager.get_style(filter_name)
+            # Get style instance using clean name
+            style_instance = style_manager.get_style(clean_filter_name)
             if not style_instance:
-                self.logger.warning(f"No style found for filter: {filter_name}")
+                self.logger.warning(f"No style found for filter: {clean_filter_name}")
                 # Use fallback parameters
-                parameters = self.main_window.parameter_manager.create_fallback_parameters(filter_name)
+                parameters = self.main_window.parameter_manager.create_fallback_parameters(clean_filter_name)
             else:
                 # Get parameter definitions
                 parameters = []
@@ -179,11 +158,11 @@ class EffectManager:
                         
                 # Create comprehensive fallback parameters based on filter type
                 if not parameters:
-                    parameters = self.main_window.parameter_manager.create_fallback_parameters(filter_name)
+                    parameters = self.main_window.parameter_manager.create_fallback_parameters(clean_filter_name)
             
             # Store the current style for parameter updates
             self.main_window.current_style = style_instance
-            self.main_window.parameter_manager.current_filter_name = filter_name
+            self.main_window.parameter_manager.current_filter_name = clean_filter_name
             
             # Create and embed parameter widgets into the existing layout
             self.main_window.parameter_manager.create_embedded_parameter_widgets(parameters)
@@ -223,9 +202,9 @@ class EffectManager:
             # Map UI effect names to actual style names
             style_mapping = {
                 # Consolidated styles
-                "🎭 Cartoon Effects": "ConsolidatedCartoon",
-                "✏️ Sketch Effects": "ConsolidatedSketch", 
-                "🎨 Color Effects": "ConsolidatedColor",
+                "🎭 Cartoon Effects": "Cartoon (Detailed)",
+                "✏️ Sketch Effects": "Pencil Sketch", 
+                "🎨 Color Effects": "Brightness Only",
                 
                 # Individual styles
                 "💧 Watercolor": "Watercolor",
@@ -292,10 +271,18 @@ class EffectManager:
             self.main_window.pending_params = {}
             
             # Update webcam service if running
-            if hasattr(self.main_window, 'webcam_service') and self.main_window.webcam_service:
+            if hasattr(self.main_window, 'webcam_manager') and self.main_window.webcam_manager:
+                # Update through the webcam manager
+                self.main_window.webcam_manager.update_style(actual_style_name, {})
+                self.logger.info(f"🔧 Updated webcam manager with style: {actual_style_name}")
+            elif hasattr(self.main_window, 'webcam_service') and self.main_window.webcam_service:
+                # Fallback to direct webcam service
                 self.main_window.webcam_service.update_style(style_instance, {})
+                self.logger.info(f"🔧 Updated webcam service with style: {actual_style_name}")
+            else:
+                self.logger.warning("No webcam service or manager available")
                 
-            self.logger.info(f"Applied style: {actual_style_name}")
+            self.logger.info(f"🎨 STYLE APPLIED: {actual_style_name}")
             
         except Exception as e:
             self.logger.error(f"Error loading and applying style: {e}")
@@ -313,3 +300,152 @@ class EffectManager:
         if hasattr(self.main_window, 'status_label'):
             self.main_window.status_label.setText(message)
         self.logger.info(message) 
+
+    def add_plugin_effect(self, effect):
+        """Add a plugin effect to the effect manager."""
+        self.logger.info(f"Adding plugin effect: {effect.name}")
+        
+        # Store the plugin effect
+        if not hasattr(self, 'plugin_effects'):
+            self.plugin_effects = {}
+        
+        self.plugin_effects[effect.name] = effect
+        
+        # Create a button for the plugin effect
+        effect_btn = QPushButton(f"🎨 {effect.name}")
+        effect_btn.setMinimumHeight(40)
+        effect_btn.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #404040, stop:1 #2d2d2d);
+                border: 1px solid #404040;
+                border-radius: 6px;
+                padding: 8px;
+                text-align: left;
+                font-size: 11px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #505050, stop:1 #404040);
+                border: 1px solid #0096ff;
+            }
+            QPushButton:pressed {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #2d2d2d, stop:1 #404040);
+            }
+        """)
+        
+        # Connect button to plugin effect application
+        effect_btn.clicked.connect(lambda checked, effect_name=effect.name: self.apply_plugin_effect(effect_name))
+        
+        # Add to effects layout
+        if hasattr(self.main_window, 'effects_layout'):
+            self.main_window.effects_layout.addWidget(effect_btn)
+    
+    def apply_plugin_effect(self, effect_name):
+        """Apply a plugin effect."""
+        try:
+            self.logger.info(f"🎭 APPLYING PLUGIN EFFECT: {effect_name}")
+            
+            if hasattr(self, 'plugin_effects') and effect_name in self.plugin_effects:
+                effect = self.plugin_effects[effect_name]
+                
+                # Set as current effect
+                self.current_effect = effect
+                
+                # Create UI for the plugin effect
+                self.create_plugin_effect_ui(effect)
+                
+                # Update status
+                self.update_status(f"Applied plugin effect: {effect_name}")
+                
+        except Exception as e:
+            self.logger.error(f"Error applying plugin effect: {e}")
+            import traceback
+            self.logger.error(f"Traceback: {traceback.format_exc()}")
+    
+    def create_plugin_effect_ui(self, effect):
+        """Create UI for a plugin effect."""
+        try:
+            # Get the UI component for this effect
+            if hasattr(self.main_window, 'plugin_manager'):
+                plugin_manager = self.main_window.plugin_manager
+                effect_id = f"{effect.name}_{effect.version}" if hasattr(effect, 'version') else effect.name
+                ui = plugin_manager.get_effect_ui(effect_id)
+                
+                if ui:
+                    # Clear existing parameter controls
+                    if hasattr(self.main_window, 'params_layout'):
+                        # Clear the layout
+                        while self.main_window.params_layout.count():
+                            child = self.main_window.params_layout.takeAt(0)
+                            if child.widget():
+                                child.widget().deleteLater()
+                    
+                    # Add the plugin UI to the parameters layout
+                    if hasattr(self.main_window, 'params_layout'):
+                        self.main_window.params_layout.addWidget(ui)
+                        
+                        # Connect parameter changes to the main window
+                        ui.parameter_changed.connect(self.on_plugin_parameter_changed)
+                        
+                        self.logger.info(f"Created UI for plugin effect: {effect.name}")
+                    else:
+                        self.logger.warning("No params_layout found in main window")
+                else:
+                    self.logger.warning(f"No UI found for plugin effect: {effect.name}")
+                    
+        except Exception as e:
+            self.logger.error(f"Error creating plugin effect UI: {e}")
+            import traceback
+            self.logger.error(f"Traceback: {traceback.format_exc()}")
+    
+    def on_plugin_parameter_changed(self, param_name, value):
+        """Handle plugin parameter changes."""
+        try:
+            self.logger.info(f"Plugin parameter changed: {param_name} = {value}")
+            
+            # Update the current effect's parameters
+            if self.current_effect and hasattr(self.current_effect, 'parameters'):
+                # Update the parameter in the effect
+                if param_name in self.current_effect.parameters:
+                    self.current_effect.parameters[param_name]['default'] = value
+                    
+                    # Store the updated parameters for the preview manager
+                    if not hasattr(self, 'current_effect_params'):
+                        self.current_effect_params = {}
+                    self.current_effect_params[param_name] = value
+                
+                # Update webcam service with new parameters
+                if hasattr(self.main_window, 'webcam_manager') and self.main_window.webcam_manager:
+                    # Get all current parameters
+                    all_params = {}
+                    if hasattr(self, 'current_effect_params'):
+                        all_params = self.current_effect_params.copy()
+                    
+                    # Update through the webcam manager
+                    if self.current_effect:
+                        effect_name = self.current_effect.name
+                        self.main_window.webcam_manager.update_style(effect_name, all_params)
+                        self.logger.info(f"🔧 Updated webcam manager with effect '{effect_name}' and parameters: {all_params}")
+                elif hasattr(self.main_window, 'webcam_service') and self.main_window.webcam_service:
+                    # Get all current parameters
+                    all_params = {}
+                    if hasattr(self, 'current_effect_params'):
+                        all_params = self.current_effect_params.copy()
+                    
+                    # Fallback to direct webcam service
+                    self.main_window.webcam_service.update_parameters(all_params)
+                    self.logger.info(f"🔧 Updated webcam service with parameters: {all_params}")
+                else:
+                    self.logger.warning("No webcam service or manager available")
+                
+                # Trigger preview update
+                if hasattr(self.main_window, 'preview_manager'):
+                    self.main_window.preview_manager.update_preview()
+                    
+        except Exception as e:
+            self.logger.error(f"Error handling plugin parameter change: {e}")
+            import traceback
+            self.logger.error(f"Traceback: {traceback.format_exc()}") 

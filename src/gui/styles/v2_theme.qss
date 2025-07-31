@@ -1,4 +1,16 @@
-/* V2 GUI Theme - Dark Theme (Primary) */
+/* Dreamscape V2 GUI Theme - Dark Theme (Primary) */
+
+/* =============================================================================
+   DREAMSCAPE COLOR PALETTE
+   ============================================================================= */
+
+/* Dreamscape Brand Colors */
+/* Primary Blue: #0096ff */
+/* Secondary Blue: #007acc */
+/* Accent Blue: #005a9e */
+/* Dark Background: #1a1a1a */
+/* Medium Dark: #2d2d2d */
+/* Border Gray: #404040 */
 
 /* =============================================================================
    GLOBAL STYLES
@@ -50,12 +62,12 @@ QToolBar QToolButton {
 
 QToolBar QToolButton:hover {
     background-color: #404040;
-    border-color: #007acc;
+    border-color: #0096ff;
 }
 
 QToolBar QToolButton:pressed {
-    background-color: #007acc;
-    border-color: #005a9e;
+    background-color: #0096ff;
+    border-color: #007acc;
 }
 
 QToolBar QComboBox {
@@ -68,7 +80,7 @@ QToolBar QComboBox {
 }
 
 QToolBar QComboBox:hover {
-    border-color: #007acc;
+    border-color: #0096ff;
 }
 
 QToolBar QComboBox::drop-down {
@@ -93,7 +105,7 @@ QSplitter::handle {
 }
 
 QSplitter::handle:hover {
-    background-color: #007acc;
+    background-color: #0096ff;
 }
 
 /* =============================================================================

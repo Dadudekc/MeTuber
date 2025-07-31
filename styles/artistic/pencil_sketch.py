@@ -47,21 +47,17 @@ class PencilSketch(Style):
         if not 0.5 <= contrast <= 5.0:
             raise ValueError("Parameter 'contrast' must be between 0.5 and 5.0.")
 
-        # Convert to grayscale
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        inverted_image = 255 - gray_image
+        blurred = cv2.GaussianBlur(inverted_image, (21, 21), 0)
+        inverted_blurred = 255 - blurred
+        pencil_sketch = cv2.divide(gray_image, inverted_blurred, scale=256.0)
+        return cv2.cvtColor(pencil_sketch, cv2.COLOR_GRAY2BGR)
 
-        # Apply Gaussian blur
-        blurred = cv2.GaussianBlur(gray, (blur_intensity, blur_intensity), 0)
-
-        # Apply adaptive threshold
-        sketch = cv2.adaptiveThreshold(
-            blurred, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY_INV, 11, 2
-        )
-
-        # Adjust contrast
-        sketch = cv2.convertScaleAbs(sketch, alpha=contrast, beta=0)
-
-        return sketch
+    def get_default_params(self):
+        return {
+            "blur_intensity": 21
+        }
 
 
 # Live webcam feed integration

@@ -1,5 +1,5 @@
 """
-Widget Manager Module for MeTuber V2 Professional
+Widget Manager Module for Dreamscape V2 Professional
 
 Handles all widget-related functionality including draggable widget system,
 widget registry management, widget creation and lifecycle, and layout persistence.

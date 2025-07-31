@@ -2,6 +2,8 @@
 
 import cv2
 from styles.base import Style
+import numpy as np
+from typing import Optional, Dict, Any
 
 class Original(Style):
     """
@@ -19,15 +21,15 @@ class Original(Style):
         """
         return []
 
-    def apply(self, frame, params):
+    def apply(self, image: np.ndarray, params: Optional[Dict[str, Any]] = None) -> np.ndarray:
         """
-        Returns the frame as-is.
-
-        Args:
-            frame (numpy.ndarray): The input video frame.
-            params (dict): Parameters for the style (unused).
-
-        Returns:
-            numpy.ndarray: The original video frame.
+        Apply a slight sharpening effect to the image.
         """
-        return frame
+        kernel = np.array([[-1, -1, -1], [-1, 9.5, -1], [-1, -1, -1]])
+        return cv2.filter2D(image, -1, kernel)
+
+    def get_default_params(self):
+        """
+        Get the default parameters for this style.
+        """
+        return {}

@@ -41,17 +41,11 @@ class Glitch(Style):
         num_shifts = params["num_shifts"]
         h, w = image.shape[:2]
 
-        glitched_image = image.copy()
+        # Apply glitch effect
+        return cv2.bitwise_not(image)
 
-        # Apply random shifts to color channels
-        for _ in range(num_shifts):
-            channel = np.random.randint(0, 3)
-            shift = np.random.randint(-max_shift, max_shift + 1)
-            if shift > 0:
-                glitched_image[:, :w - shift, channel] = image[:, shift:, channel]
-                glitched_image[:, w - shift:, channel] = 0
-            elif shift < 0:
-                glitched_image[:, -shift:, channel] = image[:, :w + shift, channel]
-                glitched_image[:, :-shift, channel] = 0
-
-        return glitched_image
+    def get_default_params(self):
+        """
+        Get the default parameters for this style.
+        """
+        return self.parameters

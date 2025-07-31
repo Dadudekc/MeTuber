@@ -1,5 +1,5 @@
 """
-Style Manager Module for MeTuber V2 Professional
+Style Manager Module for Dreamscape V2 Professional
 
 Handles all style-related functionality including style loading,
 parameter extraction, style instance management, and style registry.
@@ -22,6 +22,27 @@ class StyleManager:
         self.loaded_styles = {}
         self.style_registry = {}
         
+    def pre_load_styles_lazy(self):
+        """Pre-load styles lazily (called by main window)."""
+        try:
+            self.logger.info("PRE-LOADING STYLES (LAZY)...")
+            
+            # Import style manager
+            from src.core.style_manager import StyleManager as CoreStyleManager
+            
+            # Create style manager instance
+            self.style_manager_ready = CoreStyleManager()
+            
+            # Store reference in main window for easy access
+            self.main_window.style_manager = self.style_manager_ready
+            
+            self.logger.info("Style manager ready for lazy loading!")
+            
+        except Exception as e:
+            self.logger.error(f"Error pre-loading styles (lazy): {e}")
+            import traceback
+            self.logger.error(f"Traceback: {traceback.format_exc()}")
+    
     def pre_load_styles(self):
         """Pre-load all styles for instant access."""
         try:

@@ -306,3 +306,11 @@ class StyleManager:
     def pre_load_styles(self) -> None:
         """Pre-load all styles (full loading for compatibility)."""
         self._load_styles() 
+
+    def get_available_styles(self):
+        """Get list of all available style names."""
+        try:
+            return list(self.style_instances.keys())
+        except Exception as e:
+            self.logger.error(f"Error getting available styles: {e}")
+            return [] 

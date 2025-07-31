@@ -1,5 +1,5 @@
 """
-Preview Manager Module for MeTuber V2 Professional
+Preview Manager Module for Dreamscape V2 Professional
 
 Handles all preview-related functionality including frame updates,
 camera adjustments, performance monitoring, and preview controls.
@@ -32,24 +32,17 @@ class PreviewManager:
         
     def init_preview_timer(self):
         """Initialize the preview update timer."""
-        self.logger.info("Initializing preview timer")
-        
         self.preview_timer = QTimer()
         self.preview_timer.timeout.connect(self.update_preview)
-        self.preview_timer.setInterval(8)  # 120 FPS for instant response
+        self.preview_timer.setInterval(1)  # 1000 FPS for instant response
         
     def pre_initialize_timer(self):
         """Pre-initialize timer for instant startup."""
-        self.logger.info("PRE-INITIALIZING TIMER...")
         self.init_preview_timer()
-        self.logger.info("Timer pre-initialized at 120 FPS!")
         
     def update_preview(self):
         """Update the preview display with current frame."""
         try:
-            if not self.is_processing:
-                return
-                
             # Get frame from webcam service or direct capture
             frame = self.get_current_frame()
             if frame is None:
@@ -64,16 +57,46 @@ class PreviewManager:
                     # Ensure params is a dictionary, not a list
                     if isinstance(params, list):
                         params = {}
-                        self.logger.warning("Style parameters were a list, converted to empty dict")
                     
                     processed_frame = self.main_window.current_style.apply(frame, params)
                     if processed_frame is not None:
                         frame = processed_frame
                 except Exception as style_error:
                     self.logger.warning(f"Style application failed: {style_error}")
+            
+            # Apply plugin effect if available
+            if hasattr(self.main_window, 'effect_manager') and self.main_window.effect_manager.current_effect:
+                try:
+                    current_effect = self.main_window.effect_manager.current_effect
+                    
+                    # Check if it's a plugin effect
+                    if hasattr(current_effect, 'apply') and callable(current_effect.apply):
+                        # Get current parameters from the effect manager
+                        effect_params = {}
+                        if hasattr(self.main_window.effect_manager, 'current_effect_params'):
+                            effect_params = self.main_window.effect_manager.current_effect_params.copy()
+                        
+                        # If no stored parameters, get defaults from effect
+                        if not effect_params and hasattr(current_effect, 'parameters'):
+                            for param_name, param_def in current_effect.parameters.items():
+                                effect_params[param_name] = param_def.get('default', 0)
+                        
+                        # Apply the plugin effect
+                        processed_frame = current_effect.apply(frame, effect_params)
+                        if processed_frame is not None:
+                            frame = processed_frame
+                            
+                except Exception as plugin_error:
+                    self.logger.warning(f"Plugin effect application failed: {plugin_error}")
                     
             # Apply camera adjustments
             frame = self.apply_camera_adjustments(frame)
+            
+            # Apply captioner overlay if active
+            frame = self.apply_captioner_overlay(frame)
+            
+            # Store current frame
+            self.current_frame = frame.copy()
             
             # Update display
             self.update_preview_display(frame)
@@ -87,27 +110,120 @@ class PreviewManager:
     def get_current_frame(self):
         """Get current frame from webcam or direct capture."""
         try:
-            # Try webcam service first
+            # Try webcam service first (check both direct and through webcam_manager)
+            webcam_service = None
+            
+            # Check if webcam_service is directly accessible
             if hasattr(self.main_window, 'webcam_service') and self.main_window.webcam_service:
-                if hasattr(self.main_window.webcam_service, 'current_frame'):
-                    return self.main_window.webcam_service.current_frame
-                    
-            # Fallback to direct capture
+                webcam_service = self.main_window.webcam_service
+            # Check if webcam_service is accessible through webcam_manager
+            elif (hasattr(self.main_window, 'webcam_manager') and 
+                  self.main_window.webcam_manager and 
+                  hasattr(self.main_window.webcam_manager, 'webcam_service') and 
+                  self.main_window.webcam_manager.webcam_service):
+                webcam_service = self.main_window.webcam_manager.webcam_service
+            
+            if webcam_service:
+                # Try to get the last frame from webcam service
+                if hasattr(webcam_service, 'get_last_frame'):
+                    frame = webcam_service.get_last_frame()
+                    if frame is not None:
+                        self.logger.debug(f"Got frame from webcam service: {frame.shape}")
+                        return frame
+                    else:
+                        self.logger.debug("Webcam service returned None frame")
+                        
+            # Try webcam manager
+            if hasattr(self.main_window, 'webcam_manager') and self.main_window.webcam_manager:
+                if hasattr(self.main_window.webcam_manager, 'get_current_frame'):
+                    frame = self.main_window.webcam_manager.get_current_frame()
+                    if frame is not None:
+                        self.logger.debug(f"Got frame from webcam manager: {frame.shape}")
+                        return frame
+                        
+            self.logger.info("No frames available from webcam services, trying direct capture...")
+            # Fallback to direct capture (with timeout to prevent blocking)
             if not hasattr(self, '_cap'):
-                self._cap = cv2.VideoCapture(0)
-                if not self._cap.isOpened():
-                    self.logger.error("Failed to open webcam")
-                    return None
+                try:
+                    # Use a timeout approach to prevent blocking
+                    import threading
+                    import time
                     
-            ret, frame = self._cap.read()
-            if ret:
-                return frame
-            else:
-                return None
-                
+                    self._cap = None
+                    self._cap_ready = False
+                    
+                    def open_camera():
+                        try:
+                            cap = cv2.VideoCapture(0)
+                            if cap.isOpened():
+                                self._cap = cap
+                                self._cap_ready = True
+                            else:
+                                self.logger.warning("Failed to open direct camera capture")
+                        except Exception as e:
+                            self.logger.error(f"Error opening direct camera: {e}")
+                    
+                    # Start camera opening in a separate thread with timeout
+                    camera_thread = threading.Thread(target=open_camera)
+                    camera_thread.daemon = True
+                    camera_thread.start()
+                    
+                    # Wait for camera to be ready (with timeout)
+                    timeout = 2.0  # 2 second timeout
+                    start_time = time.time()
+                    while not self._cap_ready and (time.time() - start_time) < timeout:
+                        time.sleep(0.1)
+                    
+                    if not self._cap_ready:
+                        self.logger.warning("Camera initialization timed out")
+                        return self._generate_test_frame()
+                        
+                except Exception as e:
+                    self.logger.error(f"Error in camera initialization: {e}")
+                    return self._generate_test_frame()
+                    
+            # Read frame from direct capture
+            if self._cap and self._cap.isOpened():
+                ret, frame = self._cap.read()
+                if ret:
+                    return frame
+                    
+            # If no camera available, generate test frame
+            return self._generate_test_frame()
+            
         except Exception as e:
             self.logger.error(f"Error getting current frame: {e}")
-            return None
+            return self._generate_test_frame()
+    
+    def _generate_test_frame(self):
+        """Generate a test frame when no camera is available."""
+        try:
+            # Create a simple test frame
+            height, width = 480, 640
+            frame = np.zeros((height, width, 3), dtype=np.uint8)
+            
+            # Add some visual elements to show it's working
+            # Draw a gradient background
+            for y in range(height):
+                for x in range(width):
+                    frame[y, x] = [
+                        int(255 * x / width),  # Blue gradient
+                        int(255 * y / height), # Green gradient
+                        128  # Red constant
+                    ]
+            
+            # Add text overlay
+            cv2.putText(frame, "No Camera Available", (50, height//2), 
+                       cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+            cv2.putText(frame, "Check camera connection", (50, height//2 + 50), 
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.7, (200, 200, 200), 2)
+            
+            return frame
+            
+        except Exception as e:
+            self.logger.error(f"Error generating test frame: {e}")
+            # Return a simple black frame as last resort
+            return np.zeros((480, 640, 3), dtype=np.uint8)
             
     def apply_camera_adjustments(self, frame):
         """Apply camera adjustments to the frame."""
@@ -144,32 +260,62 @@ class PreviewManager:
         except Exception as e:
             self.logger.error(f"Error applying camera adjustments: {e}")
             return frame
+    
+    def apply_captioner_overlay(self, frame):
+        """Apply captioner overlay to the frame if active."""
+        try:
+            if frame is None:
+                return frame
+                
+            # Check if captioner is available and active
+            if (hasattr(self.main_window, 'ui_components') and 
+                hasattr(self.main_window.ui_components, 'audio_captioner_controls')):
+                
+                audio_controls = self.main_window.ui_components.audio_captioner_controls
+                
+                if audio_controls and audio_controls.is_active():
+                    captioner_manager = audio_controls.get_captioner_manager()
+                    
+                    if captioner_manager:
+                        # Render captioner overlay
+                        frame_with_captions = captioner_manager.render_frame(frame)
+                        if frame_with_captions is not None:
+                            return frame_with_captions
+            
+            return frame
+            
+        except Exception as e:
+            self.logger.error(f"Error applying captioner overlay: {e}")
+            return frame
             
     def update_preview_display(self, frame):
         """Update the preview display with the given frame."""
         try:
-            if frame is None or not hasattr(self.main_window, 'preview_label'):
+            if frame is None:
                 return
                 
-            # Convert frame to QPixmap
-            height, width, channel = frame.shape
-            bytes_per_line = 3 * width
-            
             # Convert BGR to RGB
             rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            
+            # Get frame dimensions
+            height, width, channel = rgb_frame.shape
+            bytes_per_line = 3 * width
             
             # Create QImage
             q_image = QImage(rgb_frame.data, width, height, bytes_per_line, QImage.Format_RGB888)
             
-            # Scale to preview size
-            preview_size = self.get_preview_size()
+            # Scale to fill the entire preview label
+            label_size = self.main_window.preview_label.size()
             scaled_pixmap = QPixmap.fromImage(q_image).scaled(
-                preview_size[0], preview_size[1], 
-                Qt.IgnoreAspectRatio, Qt.FastTransformation
+                label_size.width(), label_size.height(), 
+                Qt.KeepAspectRatio, Qt.SmoothTransformation
             )
             
             # Update preview label
             self.main_window.preview_label.setPixmap(scaled_pixmap)
+            
+            # Force a repaint to ensure the pixmap is displayed
+            self.main_window.preview_label.repaint()
             
         except Exception as e:
             self.logger.error(f"Error updating preview display: {e}")
@@ -181,7 +327,7 @@ class PreviewManager:
                 size_text = self.main_window.size_combo.currentText()
                 
                 if size_text == "480x360":
-                    return (480, 360)
+                    return (640, 480)  # Match label minimum size
                 elif size_text == "640x480":
                     return (640, 480)
                 elif size_text == "800x600":
@@ -193,9 +339,9 @@ class PreviewManager:
                     screen = self.main_window.screen()
                     return (screen.size().width(), screen.size().height())
                 else:
-                    return (480, 360)  # Default
+                    return (640, 480)  # Default to match label size
             else:
-                return (480, 360)  # Default
+                return (640, 480)  # Default to match label size
                 
         except Exception as e:
             self.logger.error(f"Error getting preview size: {e}")
@@ -265,8 +411,8 @@ class PreviewManager:
     def on_zoom_changed(self, zoom_text):
         """Handle preview zoom change."""
         try:
-            self.logger.info(f"Preview zoom changed to: {zoom_text}")
             # Zoom will be applied on next frame update
+            pass
         except Exception as e:
             self.logger.error(f"Error handling zoom change: {e}")
             
@@ -293,20 +439,32 @@ class PreviewManager:
             if self.is_processing:
                 self.preview_timer.start()
                 
-            self.logger.info(f"Performance settings updated")
-            
         except Exception as e:
             self.logger.error(f"Error handling performance change: {e}")
             
     def start_preview(self):
         """Start the preview display."""
         try:
+            # Check if we have any frame source available
+            test_frame = self.get_current_frame()
+            if test_frame is None:
+                self.logger.warning("No frame source available, preview will show test frame")
+            
             self.is_processing = True
-            if self.preview_timer:
+            
+            # Update preview immediately without timer
+            self.update_preview()
+            
+            # Start the preview timer for continuous updates (optional)
+            if self.preview_timer and not self.preview_timer.isActive():
                 self.preview_timer.start()
-            self.logger.info("Preview started")
+            
         except Exception as e:
             self.logger.error(f"Error starting preview: {e}")
+            # Even if there's an error, try to show at least a test frame
+            self.is_processing = True
+            if self.preview_timer and not self.preview_timer.isActive():
+                self.preview_timer.start()
             
     def stop_preview(self):
         """Stop the preview display."""
@@ -314,7 +472,6 @@ class PreviewManager:
             self.is_processing = False
             if self.preview_timer:
                 self.preview_timer.stop()
-            self.logger.info("Preview stopped")
         except Exception as e:
             self.logger.error(f"Error stopping preview: {e}")
             
@@ -322,7 +479,7 @@ class PreviewManager:
         """Toggle performance graph display."""
         try:
             # Implementation for performance graph toggle
-            self.logger.info("Performance graph toggled")
+            pass
         except Exception as e:
             self.logger.error(f"Error toggling performance graph: {e}")
             
@@ -333,6 +490,5 @@ class PreviewManager:
                 self._cap.release()
             if self.preview_timer:
                 self.preview_timer.stop()
-            self.logger.info("Preview manager cleaned up")
         except Exception as e:
             self.logger.error(f"Error cleaning up preview manager: {e}") 

@@ -13,13 +13,12 @@ class BlurStyle(Style):
     category = "Adjustments"  # Unified category as "Effects" for consistency
     parameters = [
         {
-            "name": "kernel_size",
+            "name": "blur_intensity",
             "type": "int",
-            "default": 5,
+            "default": 15,
             "min": 1,
-            "max": 31,
+            "max": 51,
             "step": 2,
-            "label": "Kernel Size",
         }
     ]
 
@@ -49,7 +48,7 @@ class BlurStyle(Style):
         # Validate and retrieve parameters
         params = self.validate_params(params)
 
-        kernel_size = params["kernel_size"]
+        kernel_size = params["blur_intensity"]
 
         # Ensure kernel size is odd (required for GaussianBlur)
         if kernel_size % 2 == 0:

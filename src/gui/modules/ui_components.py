@@ -1,5 +1,5 @@
 """
-UI Components Module for MeTuber V2 Professional
+UI Components Module for Dreamscape V2 Professional
 
 Handles all UI creation, styling, and layout management.
 Preserves exact visual appearance while modularizing the code.
@@ -39,7 +39,7 @@ class UIComponents:
         self.embedded_param_widgets = {}
         
         # Button components
-        self.start_stop_btn = None
+        self.processing_status_label = None
         self.snapshot_btn = None
         self.reset_btn = None
         self.fullscreen_btn = None
@@ -333,8 +333,14 @@ class UIComponents:
         self.central_widget = QWidget()
         self.main_window.setCentralWidget(self.central_widget)
         
-        # Create layout
-        layout = QVBoxLayout(self.central_widget)
+        # Ensure central widget is visible
+        self.central_widget.setVisible(True)
+        self.central_widget.show()
+        
+        # Create layout and set it on the central_widget
+        layout = QVBoxLayout()
+        self.central_widget.setLayout(layout)
+        
         layout.setContentsMargins(20, 20, 20, 20)
         layout.setSpacing(10)
         
@@ -344,14 +350,18 @@ class UIComponents:
         self.preview_label.setMinimumSize(640, 480)
         self.preview_label.setStyleSheet("""
             QLabel {
-                background: #1a1a1a;
+                background: #000000;
                 border: 2px solid #404040;
                 border-radius: 8px;
-                color: #666666;
-                font-size: 24px;
+                color: #ffffff;
+                font-size: 18px;
                 font-weight: bold;
             }
         """)
+        
+        # Ensure the preview label is visible
+        self.preview_label.setVisible(True)
+        self.preview_label.show()
         
         layout.addWidget(self.preview_label)
         
@@ -425,29 +435,168 @@ class UIComponents:
         controls_layout.setSpacing(10)
         controls_layout.setContentsMargins(10, 10, 10, 10)
         
-        # Start/Stop button
-        self.start_stop_btn = QPushButton("▶️ Start Processing")
-        self.start_stop_btn.setMinimumHeight(40)
+        # Start/Stop Button
+        start_group = QGroupBox("🎬 Preview Control")
+        start_layout = QVBoxLayout(start_group)
+        
+        self.start_stop_btn = QPushButton("▶️ Start Preview")
+        self.start_stop_btn.setCheckable(True)
+        self.start_stop_btn.setMinimumHeight(45)
         self.start_stop_btn.setStyleSheet("""
             QPushButton {
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #00aa00, stop:1 #008800);
-                border: 1px solid #00aa00;
-                border-radius: 6px;
-                font-size: 12px;
+                    stop:0 #27ae60, stop:1 #2ecc71);
+                border: 1px solid #27ae60;
+                border-radius: 8px;
+                font-size: 13px;
                 font-weight: bold;
+                color: white;
             }
             QPushButton:hover {
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #00cc00, stop:1 #00aa00);
+                    stop:0 #2ecc71, stop:1 #27ae60);
             }
-            QPushButton:pressed {
+            QPushButton:checked {
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #008800, stop:1 #006600);
+                    stop:0 #e74c3c, stop:1 #c0392b);
+                border: 1px solid #e74c3c;
             }
         """)
         
-        controls_layout.addWidget(self.start_stop_btn)
+        start_info = QLabel("Click to start/stop camera preview\nand video processing")
+        start_info.setAlignment(Qt.AlignCenter)
+        start_info.setStyleSheet("""
+            QLabel {
+                color: #666666;
+                font-size: 10px;
+                padding: 4px;
+            }
+        """)
+        
+        start_layout.addWidget(self.start_stop_btn)
+        start_layout.addWidget(start_info)
+        
+        # Processing Status Indicator
+        status_group = QGroupBox("📊 Processing Status")
+        status_layout = QVBoxLayout(status_group)
+        
+        self.processing_status_label = QLabel("⏸️ Preview Stopped")
+        self.processing_status_label.setAlignment(Qt.AlignCenter)
+        self.processing_status_label.setMinimumHeight(40)
+        self.processing_status_label.setStyleSheet("""
+            QLabel {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #666666, stop:1 #555555);
+                border: 1px solid #666666;
+                border-radius: 6px;
+                font-size: 12px;
+                font-weight: bold;
+                color: white;
+                padding: 8px;
+            }
+        """)
+        
+        # Auto-processing info
+        self.auto_processing_info = QLabel("Processing starts automatically\nwhen preview is active")
+        self.auto_processing_info.setAlignment(Qt.AlignCenter)
+        self.auto_processing_info.setStyleSheet("""
+            QLabel {
+                color: #666666;
+                font-size: 10px;
+                padding: 4px;
+            }
+        """)
+        
+        status_layout.addWidget(self.processing_status_label)
+        status_layout.addWidget(self.auto_processing_info)
+        
+        # AI Optimization Control
+        ai_group = QGroupBox("🤖 AI Optimization")
+        ai_layout = QVBoxLayout(ai_group)
+        
+        self.ai_optimization_btn = QPushButton("🤖 Enable AI Optimization")
+        self.ai_optimization_btn.setCheckable(True)
+        self.ai_optimization_btn.setMinimumHeight(35)
+        self.ai_optimization_btn.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #4a90e2, stop:1 #357abd);
+                border: 1px solid #4a90e2;
+                border-radius: 6px;
+                font-size: 11px;
+                font-weight: bold;
+                color: white;
+            }
+            QPushButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #5ba0f2, stop:1 #4a90e2);
+            }
+            QPushButton:checked {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #2ecc71, stop:1 #27ae60);
+                border: 1px solid #2ecc71;
+            }
+        """)
+        
+        ai_info = QLabel("AI automatically selects\noptimal parameters")
+        ai_info.setAlignment(Qt.AlignCenter)
+        ai_info.setStyleSheet("""
+            QLabel {
+                color: #666666;
+                font-size: 9px;
+                padding: 2px;
+            }
+        """)
+        
+        ai_layout.addWidget(self.ai_optimization_btn)
+        ai_layout.addWidget(ai_info)
+        
+        # Virtual Camera Control
+        vcam_group = QGroupBox("📹 Virtual Camera")
+        vcam_layout = QVBoxLayout(vcam_group)
+        
+        self.virtual_camera_btn = QPushButton("📹 Enable Dreamscape Virtual Camera")
+        self.virtual_camera_btn.setCheckable(True)
+        self.virtual_camera_btn.setMinimumHeight(35)
+        self.virtual_camera_btn.setStyleSheet("""
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #e74c3c, stop:1 #c0392b);
+                border: 1px solid #e74c3c;
+                border-radius: 6px;
+                font-size: 11px;
+                font-weight: bold;
+                color: white;
+            }
+            QPushButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #f75c4c, stop:1 #e74c3c);
+            }
+            QPushButton:checked {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #27ae60, stop:1 #229954);
+                border: 1px solid #27ae60;
+            }
+        """)
+        
+        vcam_info = QLabel("Use 'OBS Virtual Camera'\nin OBS, Zoom, or any streaming software")
+        vcam_info.setAlignment(Qt.AlignCenter)
+        vcam_info.setStyleSheet("""
+            QLabel {
+                color: #666666;
+                font-size: 9px;
+                padding: 2px;
+            }
+        """)
+        
+        vcam_layout.addWidget(self.virtual_camera_btn)
+        vcam_layout.addWidget(vcam_info)
+        
+        # Add all groups to the controls layout
+        controls_layout.addWidget(start_group)
+        controls_layout.addWidget(status_group)
+        controls_layout.addWidget(ai_group)
+        controls_layout.addWidget(vcam_group)
         
         # Action buttons
         actions_group = QGroupBox("📸 Actions")
@@ -483,6 +632,26 @@ class UIComponents:
         
         controls_dock.setWidget(controls_widget)
         self.main_window.addDockWidget(Qt.RightDockWidgetArea, controls_dock)
+    
+    def create_audio_captioner_dock(self):
+        """Create the audio and captioner dock widget."""
+        self.logger.info("Creating audio and captioner dock widget")
+        
+        # Import the audio captioner controls component
+        from ..components.audio_captioner_controls import AudioCaptionerControls
+        
+        audio_captioner_dock = QDockWidget("🎤 Audio & Captions", self.main_window)
+        audio_captioner_dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
+        audio_captioner_dock.setMinimumWidth(250)
+        audio_captioner_dock.setMaximumWidth(350)
+        
+        # Create the audio captioner controls widget
+        self.audio_captioner_controls = AudioCaptionerControls()
+        
+        audio_captioner_dock.setWidget(self.audio_captioner_controls)
+        self.main_window.addDockWidget(Qt.RightDockWidgetArea, audio_captioner_dock)
+        
+        self.logger.info("Audio and captioner dock created successfully")
         
     def create_properties_dock(self):
         """Create the properties dock widget."""
@@ -723,6 +892,9 @@ class UIComponents:
             'params_layout': self.params_layout,
             'embedded_param_widgets': self.embedded_param_widgets,
             'start_stop_btn': self.start_stop_btn,
+            'processing_status_label': self.processing_status_label,
+            'ai_optimization_btn': self.ai_optimization_btn,
+            'virtual_camera_btn': self.virtual_camera_btn,
             'snapshot_btn': self.snapshot_btn,
             'reset_btn': self.reset_btn,
             'fullscreen_btn': self.fullscreen_btn,

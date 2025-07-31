@@ -1,28 +1,48 @@
 import os
 from PyQt5.QtWidgets import QSplashScreen, QVBoxLayout, QLabel, QProgressBar, QWidget
 from PyQt5.QtCore import Qt, QTimer, pyqtSignal
-from PyQt5.QtGui import QPixmap, QFont
+from PyQt5.QtGui import QPixmap, QFont, QPainter, QColor
 
 class SplashScreen(QSplashScreen):
-    """Professional splash screen for Dream.OS Stream Software."""
+    """Professional splash screen for Dreamscape Stream Software."""
     
     finished = pyqtSignal()
     
     def __init__(self):
-        # Load the logo
-        logo_path = os.path.join(os.path.dirname(__file__), '..', 'assets', 'logo.png')
-        if os.path.exists(logo_path):
-            pixmap = QPixmap(logo_path)
-            # Scale to a reasonable size for splash screen
-            pixmap = pixmap.scaled(400, 300, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-        else:
-            # Fallback if logo not found
-            pixmap = QPixmap(400, 300)
-            pixmap.fill(Qt.black)
+        # Create a text-based logo for Dreamscape
+        pixmap = QPixmap(400, 300)
+        pixmap.fill(Qt.black)
+        
+        # Create a painter to draw the logo
+        painter = QPainter(pixmap)
+        painter.setRenderHint(QPainter.Antialiasing)
+        
+        # Set up the font
+        font = QFont("Segoe UI", 36, QFont.Bold)
+        painter.setFont(font)
+        
+        # Draw the main text
+        painter.setPen(QColor("#0096ff"))  # Dreamscape blue
+        painter.drawText(pixmap.rect(), Qt.AlignCenter, "Dreamscape")
+        
+        # Draw subtitle - positioned higher up
+        subtitle_font = QFont("Segoe UI", 16)
+        painter.setFont(subtitle_font)
+        painter.setPen(QColor("#cccccc"))  # Light gray
+        
+        # Calculate position to move subtitle up
+        main_text_rect = painter.fontMetrics().boundingRect("Dreamscape")
+        subtitle_rect = painter.fontMetrics().boundingRect("Stream Software")
+        
+        # Position subtitle closer to main text, above the loading area
+        subtitle_y = (pixmap.height() // 2) + (main_text_rect.height() // 2) + 20
+        painter.drawText(pixmap.width() // 2, subtitle_y, "Stream Software")
+        
+        painter.end()
         
         super().__init__(pixmap, Qt.WindowStaysOnTopHint)
         
-        self.setWindowTitle("Dream.OS Stream Software")
+        self.setWindowTitle("Dreamscape Stream Software")
         
         # Add loading text and progress bar
         self.progress = 0
@@ -43,7 +63,7 @@ class SplashScreen(QSplashScreen):
         """)
         
         # Show initial message
-        self.showMessage("Starting Dream.OS Stream Software...", 
+        self.showMessage("Starting Dreamscape Stream Software...", 
                         Qt.AlignBottom | Qt.AlignCenter, Qt.white)
     
     def start_loading(self, tasks):

@@ -34,6 +34,8 @@ class SepiaVibrant(Style):
     ]
 
     def __init__(self):
+        super().__init__()
+        self.current_variant = None
         # Initialize default_params from parameters
         self.default_params = {param["name"]: param["default"] for param in self.parameters}
 

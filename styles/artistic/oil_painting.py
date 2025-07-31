@@ -1,5 +1,6 @@
 import cv2
 from styles.base import Style
+import numpy as np
 
 
 class OilPainting(Style):
@@ -38,33 +39,24 @@ class OilPainting(Style):
         """
         return self.parameters
 
-    def apply(self, image, params=None):
+    def apply(self, image, params: dict) -> np.ndarray:
         """
-        Applies an oil painting effect to the image using OpenCV's stylization.
+        Apply oil painting effect to the image.
+        """
+        # Get parameters
+        size = params.get("size", 5)
+        dyn_ratio = params.get("dyn_ratio", 1)
 
-        Args:
-            image (numpy.ndarray): The input image in BGR format.
-            params (dict, optional): Parameters for oil painting effect.
+        # Apply the oil painting effect
+        return cv2.stylization(image, sigma_s=60, sigma_r=0.6)
 
+    def get_default_params(self):
+        """
+        Get the default parameters for this style.
         Returns:
-            numpy.ndarray: The oil painting-stylized image.
-
-        Raises:
-            ValueError: If the input image is None or invalid.
+            dict: Default parameter values.
         """
-        if image is None:
-            raise ValueError("Input image cannot be None.")
-
-        # Validate and sanitize parameters
-        params = self.validate_params(params)
-
-        size = params["size"]
-        dyn_ratio = max(1, int(params["dyn_ratio"]))  # Ensure dyn_ratio is an int >= 1
-
-        # Apply oil painting effect
-        try:
-            oil_painting = cv2.xphoto.oilPainting(image, size=size, dynRatio=dyn_ratio)
-        except cv2.error as e:
-            raise RuntimeError(f"OpenCV error during oil painting effect: {e}")
-
-        return oil_painting
+        return {
+            "size": 7,
+            "dyn_ratio": 1,
+        }

@@ -50,12 +50,10 @@ class Threshold(Style):
 
         threshold = params["threshold"]
 
-        # Convert color image to grayscale
-        if len(image.shape) == 3 and image.shape[2] == 3:
-            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        else:
-            gray = image
+        # Convert to grayscale
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
         # Apply thresholding
-        _, thresh = cv2.threshold(gray, threshold - 1, 255, cv2.THRESH_BINARY)
-        return thresh
+        _, thresh = cv2.threshold(gray, threshold, 255, cv2.THRESH_BINARY)
+        
+        return cv2.cvtColor(thresh, cv2.COLOR_GRAY2BGR)

@@ -53,7 +53,7 @@ def check_dependencies():
 def main():
     """Main launcher function."""
     print("=" * 60)
-    print("Dream.OS Stream Software (Open Source) Launcher")
+    print("Dreamscape Stream Software (Open Source) Launcher")
     print("=" * 60)
     
     # Setup environment

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-MeTuber V2 - Professional Webcam Effects Studio (Modular Version)
+Dreamscape V2 - Professional Webcam Effects Studio (Modular Version)
 A next-generation interface designed to rival OBS Studio
 """
 
@@ -102,7 +102,7 @@ class ProfessionalV2MainWindow(QMainWindow):
         
     def init_ui(self):
         """Initialize the professional user interface using UI Components manager."""
-        self.setWindowTitle("Dream.OS Stream Software (Open Source)")
+        self.setWindowTitle("Dreamscape Stream Software (Open Source)")
         self.setGeometry(50, 50, 1800, 1100)
         
         # Create all UI components using UI Components manager

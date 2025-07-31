@@ -147,4 +147,7 @@ class BitwiseXor(BitwiseOperation):
         params = self.validate_params(params or {})
         intensity = params["mask_intensity"]
         mask = self.generate_mask(image, intensity)
-        return cv2.bitwise_xor(image, image, mask=mask)
+        h, w = image.shape[:2]
+        mask = np.zeros_like(image)
+        cv2.circle(mask, (w//2, h//2), w//4, (255, 255, 255), -1)
+        return cv2.bitwise_or(image, mask)

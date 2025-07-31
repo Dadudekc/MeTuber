@@ -13,3 +13,9 @@ mypy==1.5.1
 scikit-learn==1.4.0
 scikit-image==0.22.0
 
+# Captioner dependencies
+pyaudio==0.2.11
+pillow==10.0.0
+whisper==1.1.10
+speech-recognition==3.10.0
+

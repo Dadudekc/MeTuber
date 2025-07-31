@@ -154,7 +154,7 @@ class SketchStyle(Style):
             # Reduce edge intensity
             sketch = cv2.convertScaleAbs(sketch, alpha=edge_strength, beta=0)
         
-        return sketch
+        return cv2.cvtColor(sketch, cv2.COLOR_GRAY2BGR)
 
     def _apply_advanced_sketch(self, image: np.ndarray, params: Dict[str, Any]) -> np.ndarray:
         """Apply advanced sketch effect with enhanced features."""
@@ -194,7 +194,7 @@ class SketchStyle(Style):
         if edge_strength < 1.0:
             combined = cv2.convertScaleAbs(combined, alpha=edge_strength, beta=0)
         
-        return combined
+        return cv2.cvtColor(combined, cv2.COLOR_GRAY2BGR)
 
     def _apply_color_sketch(self, image: np.ndarray, params: Dict[str, Any]) -> np.ndarray:
         """Apply colored sketch effect."""

@@ -106,7 +106,7 @@ class Style(ABC):
         if variant is None:
             variant = self.current_variant
         
-        if not self.validate_variant(variant):
+        if not self.validate_variant(variant) and variant is not None:
             raise ValueError(f"Invalid variant '{variant}' for style '{self.name}'")
         
         # Get base parameters
@@ -173,9 +173,15 @@ class Style(ABC):
             dict: Validated parameters with defaults applied.
         """
         validated = {}
-        
+
         # Get all parameters including variant-specific ones
-        all_params = self.get_variant_parameters(self.current_variant)
+        if hasattr(self, 'current_variant'):
+            all_params = self.get_variant_parameters(self.current_variant)
+        else:
+            all_params = self.get_variant_parameters()
+
+        # Create a mapping of parameter names to their definitions
+        param_map = {p['name']: p for p in all_params}
         
         for param in all_params:
             name = param["name"]
