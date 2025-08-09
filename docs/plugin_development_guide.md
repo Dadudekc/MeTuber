@@ -11,7 +11,7 @@ This guide explains how to create plugins for the me-tuber application using the
 5. [Creating UI Components](#creating-ui-components)
 6. [Dynamic Dependencies](#dynamic-dependencies)
 7. [Professional Styling](#professional-styling)
-8. [Best practice-projectss](#best-practice-projectss)
+8. [Best practice-projects-projectss](#best-practice-projects-projectss)
 9. [Testing Your Plugin](#testing-your-plugin)
 
 ## Overview
@@ -286,7 +286,7 @@ def apply_custom_styling(self):
     """)
 ```
 
-## Best practice-projectss
+## Best practice-projects-projectss
 
 ### 1. Parameter Organization
 
