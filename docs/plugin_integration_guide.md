@@ -1,6 +1,6 @@
 # Plugin Integration Guide
 
-This guide explains how to integrate the advanced plugin system with the main MeTuber application.
+This guide explains how to integrate the advanced plugin system with the main me-tuber application.
 
 ## Table of Contents
 

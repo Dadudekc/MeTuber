@@ -1,4 +1,4 @@
-# User Flow Report - MeTuber Webcam Effects Application
+# User Flow Report - me-tuber Webcam Effects Application
 
 **Date:** 07/25/2025  
 **Version:** 1.0  
@@ -7,7 +7,7 @@
 
 ## Executive Summary
 
-This report analyzes the current user flow of the MeTuber webcam effects application, identifying key user journeys, pain points, and opportunities for improvement in the V2 redesign. The analysis covers both novice and power users, with specific recommendations for enhancing usability and user satisfaction.
+This report analyzes the current user flow of the me-tuber webcam effects application, identifying key user journeys, pain points, and opportunities for improvement in the V2 redesign. The analysis covers both novice and power users, with specific recommendations for enhancing usability and user satisfaction.
 
 ## Current User Personas
 
@@ -329,7 +329,7 @@ Performance Monitor → Auto-Optimization → Manual Override → Performance Hi
 
 ## Conclusion
 
-The current MeTuber application has a solid foundation but suffers from usability issues that impact user satisfaction and adoption. The V2 redesign should focus on simplifying the user experience while maintaining the powerful functionality that users value.
+The current me-tuber application has a solid foundation but suffers from usability issues that impact user satisfaction and adoption. The V2 redesign should focus on simplifying the user experience while maintaining the powerful functionality that users value.
 
 Key recommendations:
 1. **Consolidate styles** to reduce cognitive load

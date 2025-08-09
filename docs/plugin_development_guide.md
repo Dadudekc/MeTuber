@@ -1,6 +1,6 @@
 # Plugin Development Guide
 
-This guide explains how to create plugins for the MeTuber application using the advanced plugin system.
+This guide explains how to create plugins for the me-tuber application using the advanced plugin system.
 
 ## Table of Contents
 
@@ -11,7 +11,7 @@ This guide explains how to create plugins for the MeTuber application using the 
 5. [Creating UI Components](#creating-ui-components)
 6. [Dynamic Dependencies](#dynamic-dependencies)
 7. [Professional Styling](#professional-styling)
-8. [Best Practices](#best-practices)
+8. [Best practice-projectss](#best-practice-projectss)
 9. [Testing Your Plugin](#testing-your-plugin)
 
 ## Overview
@@ -286,7 +286,7 @@ def apply_custom_styling(self):
     """)
 ```
 
-## Best Practices
+## Best practice-projectss
 
 ### 1. Parameter Organization
 
@@ -493,4 +493,4 @@ def get_preview_parameters(self):
     }
 ```
 
-This guide provides everything you need to create professional plugins for the MeTuber application. The plugin system is designed to be flexible, powerful, and easy to use while maintaining the beautiful GUI that makes the application stand out. 
+This guide provides everything you need to create professional plugins for the me-tuber application. The plugin system is designed to be flexible, powerful, and easy to use while maintaining the beautiful GUI that makes the application stand out. 

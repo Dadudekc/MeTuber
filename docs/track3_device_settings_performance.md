@@ -325,9 +325,9 @@ class EnhancedSettingsManager:
     def _get_default_config_dir(self) -> str:
         """Get default configuration directory."""
         if os.name == 'nt':  # Windows
-            return os.path.join(os.getenv('APPDATA'), 'MeTuber')
+            return os.path.join(os.getenv('APPDATA'), 'me-tuber')
         else:  # Unix-like
-            return os.path.join(os.path.expanduser('~'), '.config', 'metuber')
+            return os.path.join(os.path.expanduser('~'), '.config', 'me-tuber')
     
     def _load_settings(self) -> AppSettings:
         """Load settings with fallback to defaults."""

@@ -362,7 +362,7 @@ class TestErrorScenarios:
 
 #### 2.1 Enhanced README for V2
 ```markdown
-# MeTuber V2 - Advanced Webcam Filter Application
+# me-tuber V2 - Advanced Webcam Filter Application
 
 **Version:** 2.0.0  
 **Release Date:** March 2026  
@@ -397,8 +397,8 @@ class TestErrorScenarios:
 ### Installation
 ```bash
 # Clone the repository
-git clone https://github.com/your-repo/MeTuber.git
-cd MeTuber
+git clone https://github.com/your-repo/me-tuber.git
+cd me-tuber
 
 # Create virtual environment
 python -m venv venv
@@ -417,7 +417,7 @@ python src/main.py
 2. **Choose Style:** Browse artistic, basic, or distortion effects
 3. **Adjust Parameters:** Fine-tune the effect using the parameter controls
 4. **Start Virtual Camera:** Click "Start" to begin streaming with effects
-5. **Use in OBS:** Select "MeTuber Virtual Camera" as your video source
+5. **Use in OBS:** Select "me-tuber Virtual Camera" as your video source
 
 ## 📖 User Guide
 
@@ -562,13 +562,13 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📞 Support
 
 - **Documentation:** [docs/](docs/)
-- **Issues:** [GitHub Issues](https://github.com/your-repo/MeTuber/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/your-repo/MeTuber/discussions)
-- **Email:** support@metuber.app
+- **Issues:** [GitHub Issues](https://github.com/your-repo/me-tuber/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/your-repo/me-tuber/discussions)
+- **Email:** support@me-tuber.app
 
 ---
 
-**MeTuber V2** - Transform your webcam with professional-grade effects and filters.
+**me-tuber V2** - Transform your webcam with professional-grade effects and filters.
 ```
 
 #### 2.2 Migration Guide
@@ -576,7 +576,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 # Migration Guide: V1 to V2
 
 ## Overview
-MeTuber V2 introduces significant improvements to the style system, GUI, and overall architecture. This guide helps you migrate from V1 to V2 seamlessly.
+me-tuber V2 introduces significant improvements to the style system, GUI, and overall architecture. This guide helps you migrate from V1 to V2 seamlessly.
 
 ## Breaking Changes
 
@@ -625,8 +625,8 @@ cp config.json config_v1_backup.json
 ### 2. Install V2
 ```bash
 # Clone V2 repository
-git clone https://github.com/your-repo/MeTuber-v2.git
-cd MeTuber-v2
+git clone https://github.com/your-repo/me-tuber-v2.git
+cd me-tuber-v2
 
 # Install dependencies
 pip install -r requirements.txt
@@ -698,7 +698,7 @@ If you need to rollback to V1:
 
 ---
 
-**Need Help?** Contact support at support@metuber.app or create an issue on GitHub.
+**Need Help?** Contact support at support@me-tuber.app or create an issue on GitHub.
 ```
 
 ### Phase 3: Release Preparation
@@ -851,13 +851,13 @@ jobs:
     
     - name: Build executable
       run: |
-        pyinstaller --onefile --windowed src/main.py --name MeTuber-V2
+        pyinstaller --onefile --windowed src/main.py --name me-tuber-V2
     
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: MeTuber-V2-Executable
-        path: dist/MeTuber-V2.exe
+        name: me-tuber-V2-Executable
+        path: dist/me-tuber-V2.exe
 
   release:
     needs: build
@@ -870,7 +870,7 @@ jobs:
     - name: Download artifacts
       uses: actions/download-artifact@v3
       with:
-        name: MeTuber-V2-Executable
+        name: me-tuber-V2-Executable
     
     - name: Create Release
       uses: actions/create-release@v1
@@ -878,9 +878,9 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ github.ref }}
-        release_name: MeTuber V2 Release
+        release_name: me-tuber V2 Release
         body: |
-          ## MeTuber V2 Release
+          ## me-tuber V2 Release
           
           ### New Features
           - Modern GUI design with dark theme
@@ -903,8 +903,8 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./MeTuber-V2.exe
-        asset_name: MeTuber-V2.exe
+        asset_path: ./me-tuber-V2.exe
+        asset_name: me-tuber-V2.exe
         asset_content_type: application/octet-stream
 ```
 

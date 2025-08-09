@@ -4,7 +4,7 @@
 
 ### **1. Code Identity Patches**
 - ✅ Updated all `Dream.OS` references to `Dreamscape`
-- ✅ Updated all `MeTuber` references to `Dreamscape`
+- ✅ Updated all `me-tuber` references to `Dreamscape`
 - ✅ Updated application names and window titles
 - ✅ Updated module headers and documentation
 - ✅ Updated package initialization files
