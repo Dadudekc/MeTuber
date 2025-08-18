@@ -448,4 +448,37 @@ class EffectManager:
         except Exception as e:
             self.logger.error(f"Error handling plugin parameter change: {e}")
             import traceback
-            self.logger.error(f"Traceback: {traceback.format_exc()}") 
+            self.logger.error(f"Traceback: {traceback.format_exc()}")
+    
+    def get_available_effects(self):
+        """Get list of available effects."""
+        try:
+            effects = []
+            
+            # Add built-in effects
+            built_in_effects = [
+                "🔍 Edge Detection",
+                "🎭 Cartoon Effects", 
+                "✏️ Sketch Effects",
+                "🎨 Color Effects",
+                "💧 Watercolor",
+                "⚡ Glitch Effect",
+                "🌟 Glow Effect",
+                "🎬 Motion Blur",
+                "🌈 Color Grading",
+                "📸 Portrait Mode",
+                "🎪 Vintage",
+                "🌌 Cyberpunk"
+            ]
+            effects.extend(built_in_effects)
+            
+            # Add plugin effects if available
+            if hasattr(self, 'plugin_effects') and self.plugin_effects:
+                for effect_name in self.plugin_effects.keys():
+                    effects.append(f"🔌 {effect_name}")
+            
+            return effects
+            
+        except Exception as e:
+            self.logger.error(f"Error getting available effects: {e}")
+            return [] 

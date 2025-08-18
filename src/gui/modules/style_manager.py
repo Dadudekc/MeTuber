@@ -22,13 +22,23 @@ class StyleManager:
         self.loaded_styles = {}
         self.style_registry = {}
         
+        # CRITICAL FIX: Initialize core style manager immediately
+        try:
+            self.logger.info("Initializing core style manager...")
+            from core.style_manager import StyleManager as CoreStyleManager
+            self.style_manager_ready = CoreStyleManager()
+            self.logger.info("Core style manager initialized successfully")
+        except Exception as e:
+            self.logger.error(f"Failed to initialize core style manager: {e}")
+            self.style_manager_ready = None
+    
     def pre_load_styles_lazy(self):
         """Pre-load styles lazily (called by main window)."""
         try:
             self.logger.info("PRE-LOADING STYLES (LAZY)...")
             
-            # Import style manager
-            from src.core.style_manager import StyleManager as CoreStyleManager
+            # Import style manager - FIXED: Use absolute import
+            from core.style_manager import StyleManager as CoreStyleManager
             
             # Create style manager instance
             self.style_manager_ready = CoreStyleManager()
@@ -48,8 +58,8 @@ class StyleManager:
         try:
             self.logger.info("PRE-LOADING STYLES...")
             
-            # Import style manager
-            from src.core.style_manager import StyleManager as CoreStyleManager
+            # Import style manager - FIXED: Use absolute import
+            from core.style_manager import StyleManager as CoreStyleManager
             
             # Create style manager instance
             self.style_manager_ready = CoreStyleManager()
@@ -109,6 +119,17 @@ class StyleManager:
         except Exception as e:
             self.logger.error(f"Error getting style {style_name}: {e}")
             return None
+    
+    def get_categories(self):
+        """Get style categories from the core style manager."""
+        try:
+            if self.style_manager_ready:
+                return self.style_manager_ready.get_categories()
+            return {}
+            
+        except Exception as e:
+            self.logger.error(f"Error getting style categories: {e}")
+            return {}
             
     def get_all_styles(self):
         """Get all loaded styles."""
@@ -380,17 +401,6 @@ class StyleManager:
                 
         except Exception as e:
             self.logger.error(f"Error creating default sliders: {e}")
-            
-    def get_style_categories(self):
-        """Get all style categories."""
-        try:
-            if self.style_manager_ready:
-                return self.style_manager_ready.get_categories()
-            return []
-            
-        except Exception as e:
-            self.logger.error(f"Error getting style categories: {e}")
-            return []
             
     def get_styles_by_category(self, category):
         """Get all styles in a specific category."""

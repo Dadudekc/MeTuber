@@ -10,10 +10,10 @@ from pathlib import Path
 
 # Import the high-performance service
 try:
-    from services.high_performance_webcam_service import HighPerformanceWebcamService
+    from ...services.high_performance_webcam_service import HighPerformanceWebcamService
     HIGH_PERFORMANCE_AVAILABLE = True
 except ImportError:
-    from services.webcam_service import WebcamService as HighPerformanceWebcamService
+    from ...services.webcam_service import WebcamService as HighPerformanceWebcamService
     HIGH_PERFORMANCE_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
@@ -27,8 +27,10 @@ class WebcamManager:
     def __init__(self, main_window):
         self.logger = logging.getLogger(f"{__name__}.WebcamManager")
         self.main_window = main_window
+        # CRITICAL FIX: Ensure webcam service is properly exposed
         self.webcam_service = None
-        self.is_processing = False
+        # CRITICAL FIX: Start with processing enabled
+        self.is_processing = True
         
         # Initialize the appropriate service
         if HIGH_PERFORMANCE_AVAILABLE:
@@ -45,41 +47,75 @@ class WebcamManager:
         self.logger.info(f"🚀 Starting webcam processing (minimal: {minimal_mode})")
         
         try:
-            # CRITICAL FIX: Use the correct method signature for the webcam service
-            if hasattr(self.webcam_service, 'start_processing'):
-                # New service interface
-                success = self.webcam_service.start_processing()
-            elif hasattr(self.webcam_service, 'start'):
-                # Legacy service interface - start with default parameters
-                success = self.webcam_service.start("0", None, {})
+            # Initialize camera with optimized settings and timeout
+            camera_index = 0
+            if minimal_mode:
+                # Try multiple camera indices for minimal mode
+                for idx in range(3):
+                    if self.webcam_service.initialize_camera(idx):
+                        camera_index = idx
+                        break
             else:
-                self.logger.error("❌ Webcam service has no start method")
-                return False
+                # Add timeout for camera initialization
+                import threading
+                import time
+                
+                camera_ready = threading.Event()
+                camera_error = None
+                
+                def init_camera_with_timeout():
+                    nonlocal camera_error
+                    try:
+                        if self.webcam_service.initialize_camera(camera_index):
+                            camera_ready.set()
+                        else:
+                            camera_error = "Camera initialization failed"
+                    except Exception as e:
+                        camera_error = str(e)
+                
+                # Start camera initialization in background thread
+                init_thread = threading.Thread(target=init_camera_with_timeout, daemon=True)
+                init_thread.start()
+                
+                # Wait for camera with timeout (5 seconds)
+                if not camera_ready.wait(timeout=5.0):
+                    self.logger.warning("⚠️  Camera initialization timed out, using test mode")
+                    # Continue without camera - will use test frames
+                    camera_index = -1  # Indicate test mode
+                elif camera_error:
+                    self.logger.warning(f"⚠️  Camera initialization failed: {camera_error}, using test mode")
+                    camera_index = -1  # Indicate test mode
             
-            if success:
+            # Start processing
+            if camera_index >= 0:
+                success = self.webcam_service.start_processing()
+                if success:
+                    self.is_processing = True
+                    self._update_ui_for_processing()
+                    self.logger.info(f"✅ Webcam processing started successfully (minimal mode: {minimal_mode})")
+                    return True
+                else:
+                    self.logger.error("❌ Failed to start webcam processing")
+                    return False
+            else:
+                # Test mode - simulate processing without camera
+                self.logger.info("🔄 Starting in test mode (no camera)")
                 self.is_processing = True
                 self._update_ui_for_processing()
-                self.logger.info(f"✅ Webcam processing started successfully (minimal mode: {minimal_mode})")
                 return True
-            else:
-                self.logger.error("❌ Failed to start webcam processing")
-                return False
                 
         except Exception as e:
             self.logger.error(f"❌ Error starting webcam processing: {e}")
-            import traceback
-            self.logger.error(f"Traceback: {traceback.format_exc()}")
             return False
     
     def stop_processing(self):
         """Stop webcam processing."""
-        self.logger.info("🛑 Stopping webcam processing")
-        
         try:
             if self.webcam_service:
                 self.webcam_service.stop_processing()
             
-            self.is_processing = False
+            # CRITICAL FIX: Start with processing enabled
+            self.is_processing = True
             self._update_ui_for_stopped()
             self.logger.info("✅ Webcam processing stopped")
             
@@ -162,11 +198,12 @@ class WebcamManager:
         """Cleanup resources."""
         self.logger.info("🧹 Cleaning up webcam manager")
         
-        try:
+                try:
             if self.webcam_service:
                 self.webcam_service.cleanup()
             
-            self.is_processing = False
+            # CRITICAL FIX: Start with processing enabled
+            self.is_processing = True
             self.logger.info("✅ Webcam manager cleaned up")
             
         except Exception as e:
@@ -203,19 +240,6 @@ class WebcamManager:
                 return False
         except Exception as e:
             self.logger.error(f"❌ Error initializing webcam service: {e}")
-            return False
-    
-    def initialize_camera(self, camera_index: int) -> bool:
-        """Initialize camera with specific index (compatibility method)."""
-        self.logger.info(f"🔧 Initializing camera with index: {camera_index}")
-        try:
-            if hasattr(self.webcam_service, 'initialize_camera'):
-                return self.webcam_service.initialize_camera(camera_index)
-            else:
-                self.logger.warning("⚠️ Webcam service has no initialize_camera method")
-                return False
-        except Exception as e:
-            self.logger.error(f"❌ Error initializing camera: {e}")
             return False
     
     def start_processing_minimal(self):

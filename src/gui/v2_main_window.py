@@ -209,6 +209,10 @@ class ProfessionalV2MainWindow(QMainWindow):
         # Initialize preview timer using Preview Manager
         self.preview_manager.pre_initialize_timer()
         
+        # CRITICAL FIX: Add test button to verify preview label is working
+        self.logger.info("🔍 Debug: Adding test preview button...")
+        self.create_test_preview_button()
+        
     def setup_connections(self):
         """Setup all signal connections."""
         self.logger.info("Setting up signal connections...")
@@ -393,8 +397,14 @@ class ProfessionalV2MainWindow(QMainWindow):
             if hasattr(self, 'webcam_manager'):
                 self.webcam_manager.init_webcam_service()
                 
-                # Start webcam processing immediately without style (but don't set as running)
-                self.webcam_manager.start_processing_minimal()
+                # CRITICAL FIX: Start webcam processing immediately without style
+                try:
+                    if self.webcam_manager.start_processing_minimal():
+                        self.logger.info("✅ Webcam processing started successfully")
+                    else:
+                        self.logger.warning("⚠️ Webcam processing failed, will use test frames")
+                except Exception as webcam_error:
+                    self.logger.warning(f"⚠️ Webcam start error: {webcam_error}, will use test frames")
                 
                 # Initialize timer first, then start preview
                 if hasattr(self, 'preview_manager'):
@@ -441,6 +451,8 @@ class ProfessionalV2MainWindow(QMainWindow):
                 
         except Exception as e:
             self.logger.error(f"Error starting instant preview: {e}")
+            import traceback
+            self.logger.error(f"Traceback: {traceback.format_exc()}")
     
     def start_ai_optimization(self):
         """Start AI-powered parameter optimization."""
@@ -907,6 +919,114 @@ class ProfessionalV2MainWindow(QMainWindow):
             self.logger.info(message)
         except Exception as e:
             self.logger.error(f"Error updating status: {e}")
+    
+    def create_test_preview_button(self):
+        """Create a test button in the status bar for testing preview display."""
+        try:
+            self.logger.info("🔍 Debug: Adding test preview button...")
+            
+            # Create test preview button
+            test_btn = QPushButton("🧪 Test Preview")
+            test_btn.setToolTip("Test preview display with a sample frame")
+            test_btn.clicked.connect(self.test_preview_display)
+            
+            # Create performance control button
+            perf_btn = QPushButton("⚡ Performance")
+            perf_btn.setToolTip("Toggle between performance and quality modes")
+            perf_btn.setCheckable(True)
+            perf_btn.setChecked(False)  # Start in quality mode
+            perf_btn.clicked.connect(self.toggle_performance_mode)
+            
+            # Add both buttons to status bar
+            self.statusBar().addPermanentWidget(test_btn)
+            self.statusBar().addPermanentWidget(perf_btn)
+            
+            self.logger.info("✅ Test preview button added to status bar")
+            
+        except Exception as e:
+            self.logger.error(f"Error creating test preview button: {e}")
+    
+    def toggle_performance_mode(self):
+        """Toggle between performance and quality modes."""
+        try:
+            sender = self.sender()
+            if sender.isChecked():
+                # Performance mode (lower quality, higher FPS)
+                self.logger.info("⚡ Switching to PERFORMANCE mode")
+                self.preview_manager.update_performance_settings(
+                    target_fps=20,
+                    frame_skip=1,
+                    quality_reduction=True
+                )
+                sender.setText("⚡ Performance")
+                sender.setToolTip("Currently in PERFORMANCE mode (click for QUALITY)")
+                self.statusBar().showMessage("Performance mode: Higher FPS, lower quality", 3000)
+            else:
+                # Quality mode (higher quality, lower FPS)
+                self.logger.info("🎨 Switching to QUALITY mode")
+                self.preview_manager.update_performance_settings(
+                    target_fps=15,
+                    frame_skip=2,
+                    quality_reduction=False
+                )
+                sender.setText("🎨 Quality")
+                sender.setToolTip("Currently in QUALITY mode (click for PERFORMANCE)")
+                self.statusBar().showMessage("Quality mode: Higher quality, lower FPS", 3000)
+                
+        except Exception as e:
+            self.logger.error(f"Error toggling performance mode: {e}")
+    
+    def test_preview_display(self):
+        """Test if the preview label is working by displaying a test frame."""
+        try:
+            self.logger.info("🧪 Testing preview display...")
+            
+            if not hasattr(self, 'preview_label') or self.preview_label is None:
+                self.logger.error("❌ Preview label not found!")
+                return
+            
+            # Create a simple test frame
+            import numpy as np
+            import cv2
+            
+            # Create a colorful test frame
+            height, width = 480, 640
+            frame = np.zeros((height, width, 3), dtype=np.uint8)
+            
+            # Add colorful stripes
+            stripe_height = height // 6
+            colors = [
+                [255, 0, 0],    # Red
+                # Red
+                [0, 255, 0],    # Green
+                [0, 0, 255],    # Blue
+                [255, 255, 0],  # Yellow
+                [255, 0, 255],  # Magenta
+                [0, 255, 255],  # Cyan
+            ]
+            
+            for i, color in enumerate(colors):
+                y_start = i * stripe_height
+                y_end = (i + 1) * stripe_height
+                frame[y_start:y_end, :] = color
+            
+            # Add text
+            cv2.putText(frame, "PREVIEW TEST", (50, 240), 
+                       cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255, 255, 255), 3)
+            cv2.putText(frame, "If you see this, preview works!", (50, 300), 
+                       cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
+            
+            # Display the test frame
+            if hasattr(self, 'preview_manager') and self.preview_manager:
+                self.preview_manager.update_preview_display(frame)
+                self.logger.info("✅ Test frame sent to preview manager")
+            else:
+                self.logger.error("❌ Preview manager not available")
+                
+        except Exception as e:
+            self.logger.error(f"❌ Error testing preview display: {e}")
+            import traceback
+            self.logger.error(f"Traceback: {traceback.format_exc()}")
             
     def closeEvent(self, event):
         """Handle application close event."""

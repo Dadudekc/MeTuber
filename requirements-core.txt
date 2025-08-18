@@ -1,0 +1,7 @@
+# Core Dependencies - Minimal set for basic webcam filter functionality
+PyQt5==5.15.9
+opencv-python==4.8.0.76
+numpy==1.24.3
+pyvirtualcam==0.12.1
+
+

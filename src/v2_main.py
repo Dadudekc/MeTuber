@@ -7,21 +7,24 @@ This module provides the V2 application with improved GUI and functionality.
 import sys
 import os
 import logging
+
+# CRITICAL FIX: Add the project root AND src directory to Python path BEFORE imports
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+src_path = os.path.join(project_root, "src")
+sys.path.insert(0, project_root)
+sys.path.insert(0, src_path)
+
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import Qt
 
-# Add the project root to Python path
-project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, project_root)
-
 # Import V2 components (Modular Version)
 try:
-    from src.gui.v2_main_window import ProfessionalV2MainWindow
-    from src.core.device_manager import DeviceManagerFactory
-    from src.core.style_manager import StyleManager
-    from src.services.webcam_service import WebcamService
-    from src.config.settings_manager import SettingsManager
-    from src.plugins.plugin_manager import PluginManager
+    from gui.v2_main_window import ProfessionalV2MainWindow
+    from core.device_manager import DeviceManagerFactory
+    from core.style_manager import StyleManager
+    from services.webcam_service import WebcamService
+    from config.settings_manager import SettingsManager
+    from plugins.plugin_manager import PluginManager
 except ImportError as e:
     logging.error(f"Failed to import V2 components: {e}")
     raise
@@ -86,7 +89,7 @@ def main():
         app.setApplicationVersion("2.0.0")
         
         # Show splash screen immediately
-        from src.gui.components.splash_screen import SplashScreen
+        from gui.components.splash_screen import SplashScreen
         splash = SplashScreen()
         splash.show()
         app.processEvents()  # Make sure splash appears
