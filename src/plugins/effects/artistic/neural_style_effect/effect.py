@@ -129,7 +129,7 @@ class NeuralStyleEffectPlugin(EffectPlugin):
         }
     
     def apply(self, frame, parameters: Optional[Dict[str, Any]] = None):
-        """Apply the neural style transfer effect to a frame."""
+        """Apply neural style transfer effect with performance optimization."""
         if parameters is None:
             parameters = self.parameters
         
@@ -141,18 +141,63 @@ class NeuralStyleEffectPlugin(EffectPlugin):
         color_palette = parameters.get('color_palette', 'Vibrant')
         saturation_boost = parameters.get('saturation_boost', 1.2)
         texture_strength = parameters.get('texture_strength', 0.6)
-        detail_preservation = parameters.get('detail_preservation', 0.8)
-        enable_ai = parameters.get('enable_ai_enhancement', True)
-        ai_quality = parameters.get('ai_quality', 'Balanced')
         
-        # Apply neural style transfer effect
-        result = self._apply_neural_style(
-            frame, style_strength, content_weight, artistic_style, 
-            brush_stroke_size, color_palette, saturation_boost,
-            texture_strength, detail_preservation, enable_ai, ai_quality
-        )
+        # PERFORMANCE: Cap expensive parameters for real-time use
+        brush_stroke_size = min(brush_stroke_size, 25)  # Cap brush size for performance
+        texture_strength = min(texture_strength, 0.8)   # Cap texture strength
         
-        return result
+        # PERFORMANCE: Skip expensive operations for low style strength
+        if style_strength < 0.3:
+            # Return lightly processed frame for performance
+            return self._apply_light_processing(frame, saturation_boost)
+        
+        # Convert to float for processing
+        frame_float = frame.astype(np.float32) / 255.0
+        
+        # Apply artistic style based on selection
+        if artistic_style == 'Van Gogh':
+            styled_frame = self._apply_van_gogh_style(frame_float, brush_stroke_size)
+        elif artistic_style == 'Monet':
+            styled_frame = self._apply_monet_style(frame_float)
+        elif artistic_style == 'Picasso':
+            styled_frame = self._apply_picasso_style(frame_float)
+        elif artistic_style == 'Watercolor':
+            styled_frame = self._apply_watercolor_style(frame_float)
+        elif artistic_style == 'Oil Painting':
+            styled_frame = self._apply_oil_painting_style(frame_float, brush_stroke_size)
+        elif artistic_style == 'Sketch':
+            styled_frame = self._apply_sketch_style(frame_float)
+        else:
+            styled_frame = frame_float
+        
+        # Apply color palette processing
+        if color_palette != 'Vibrant':
+            styled_frame = self._apply_color_palette(styled_frame, color_palette)
+        
+        # Apply saturation boost (optimized)
+        if saturation_boost != 1.0:
+            styled_frame = self._apply_saturation_boost(styled_frame, saturation_boost)
+        
+        # PERFORMANCE: Apply texture only if strength is significant
+        if texture_strength > 0.2:
+            styled_frame = self._apply_texture_overlay(styled_frame, texture_strength)
+        
+        # Blend with original based on style strength
+        result = cv2.addWeighted(frame_float, content_weight, styled_frame, style_strength, 0)
+        
+        # Convert back to uint8
+        return np.clip(result * 255, 0, 255).astype(np.uint8)
+    
+    def _apply_light_processing(self, frame, saturation_boost):
+        """Apply light processing for performance mode."""
+        # PERFORMANCE: Only apply saturation boost for low style strength
+        if saturation_boost != 1.0:
+            hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+            hsv = hsv.astype(np.float32)
+            hsv[:, :, 1] = np.clip(hsv[:, :, 1] * saturation_boost, 0, 255)
+            hsv = hsv.astype(np.uint8)
+            return cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+        return frame
     
     def _apply_neural_style(self, frame, style_strength, content_weight, 
                            artistic_style, brush_stroke_size, color_palette,
@@ -308,34 +353,53 @@ class NeuralStyleEffectPlugin(EffectPlugin):
         
         return result
     
-    def _apply_color_palette(self, frame, palette, saturation_boost):
-        """Apply color palette."""
+    def _apply_saturation_boost(self, frame, boost):
+        """Apply saturation boost to frame."""
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        hsv[:, :, 1] = np.clip(hsv[:, :, 1] * boost, 0, 1)
+        return cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+    
+    def _apply_texture_overlay(self, frame, strength):
+        """Apply texture overlay with performance optimization."""
+        height, width = frame.shape[:2]
         
-        if palette == 'Vibrant':
-            hsv[:, :, 1] = np.clip(hsv[:, :, 1] * saturation_boost, 0, 1)
-        elif palette == 'Muted':
+        # PERFORMANCE: Generate smaller texture for large images
+        if width > 640:
+            small_height, small_width = max(1, height // 4), max(1, width // 4)
+            small_texture = np.random.rand(small_height, small_width, 3) * strength * 0.3
+            texture = cv2.resize(small_texture, (width, height), interpolation=cv2.INTER_LINEAR)
+        else:
+            texture = np.random.rand(height, width, 3) * strength * 0.3
+        
+        # Blend texture with frame
+        result = frame + texture
+        return np.clip(result, 0, 1)
+    
+    def _apply_color_palette(self, frame, palette):
+        """Apply color palette transformation."""
+        if palette == 'Muted':
+            # Reduce saturation
+            hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
             hsv[:, :, 1] = np.clip(hsv[:, :, 1] * 0.7, 0, 1)
+            return cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
         elif palette == 'Warm':
-            # Shift hue towards warm colors
-            hsv[:, :, 0] = np.clip(hsv[:, :, 0] * 0.8, 0, 179)
+            # Add warm tones
+            result = frame * np.array([1.2, 1.0, 0.8])
+            return np.clip(result, 0, 1)
         elif palette == 'Cool':
-            # Shift hue towards cool colors
-            hsv[:, :, 0] = np.clip(hsv[:, :, 0] * 1.2, 0, 179)
+            # Add cool tones
+            result = frame * np.array([0.8, 1.0, 1.2])
+            return np.clip(result, 0, 1)
         elif palette == 'Monochrome':
             # Convert to grayscale
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             return cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
         elif palette == 'Sepia':
             # Apply sepia filter
-            sepia_filter = np.array([[0.272, 0.534, 0.131],
-                                   [0.349, 0.686, 0.168],
-                                   [0.393, 0.769, 0.189]], dtype=np.float32)
-            return cv2.transform(frame, sepia_filter)
-        
-        return cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
-    
-    def _apply_texture_overlay(self, frame, strength):
+            result = frame * np.array([0.393, 0.769, 0.189])
+            return np.clip(result, 0, 1)
+        else:
+            return frame
         """Apply texture overlay."""
         height, width = frame.shape[:2]
         

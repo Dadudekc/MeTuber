@@ -171,6 +171,110 @@ def test_pencil_sketch_effect():
         print(f"❌ Pencil Sketch Effect test failed: {e}")
         return False
 
+def test_watercolor_effect():
+    """Test Watercolor Effect performance."""
+    print("\n🎨 Testing Watercolor Effect Performance")
+    print("=" * 50)
+    
+    try:
+        from src.plugins.effects.artistic.watercolor_effect.effect import WatercolorEffectPlugin
+        
+        # Create test image
+        test_image = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
+        print(f"✅ Test image created: {test_image.shape}")
+        
+        # Create effect plugin
+        effect = WatercolorEffectPlugin()
+        print(f"✅ Plugin created: {effect.name}")
+        
+        # Test different parameter combinations
+        test_params = [
+            {'sigma_s': 30, 'sigma_r': 0.3, 'texture_overlay': False},  # Performance mode
+            {'sigma_s': 60, 'sigma_r': 0.5, 'texture_overlay': True},   # Balanced mode
+            {'sigma_s': 80, 'sigma_r': 0.8, 'texture_overlay': True}    # Quality mode
+        ]
+        
+        for i, params in enumerate(test_params):
+            print(f"\n🔧 Test {i+1}: {params}")
+            
+            # Measure performance
+            start_time = time.time()
+            
+            # Apply effect multiple times for accurate measurement
+            for j in range(10):
+                result = effect.apply(test_image, params)
+            
+            end_time = time.time()
+            total_time = end_time - start_time
+            avg_time = total_time / 10
+            
+            print(f"   ⏱️  Average time: {avg_time*1000:.2f}ms")
+            print(f"   🚀 FPS equivalent: {1/avg_time:.1f}")
+            
+            # Check result quality
+            if result is not None and result.shape == test_image.shape:
+                print(f"   ✅ Result valid: {result.shape}")
+            else:
+                print(f"   ❌ Result invalid: {result.shape if result is not None else 'None'}")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ Watercolor Effect test failed: {e}")
+        return False
+
+def test_neural_style_effect():
+    """Test Neural Style Effect performance."""
+    print("\n🎭 Testing Neural Style Effect Performance")
+    print("=" * 50)
+    
+    try:
+        from src.plugins.effects.artistic.neural_style_effect.effect import NeuralStyleEffectPlugin
+        
+        # Create test image
+        test_image = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
+        print(f"✅ Test image created: {test_image.shape}")
+        
+        # Create effect plugin
+        effect = NeuralStyleEffectPlugin()
+        print(f"✅ Plugin created: {effect.name}")
+        
+        # Test different parameter combinations
+        test_params = [
+            {'style_strength': 0.2, 'artistic_style': 'Van Gogh', 'texture_strength': 0.3},  # Performance mode
+            {'style_strength': 0.5, 'artistic_style': 'Monet', 'texture_strength': 0.5},      # Balanced mode
+            {'style_strength': 0.8, 'artistic_style': 'Picasso', 'texture_strength': 0.7}     # Quality mode
+        ]
+        
+        for i, params in enumerate(test_params):
+            print(f"\n🔧 Test {i+1}: {params}")
+            
+            # Measure performance
+            start_time = time.time()
+            
+            # Apply effect multiple times for accurate measurement
+            for j in range(10):
+                result = effect.apply(test_image, params)
+            
+            end_time = time.time()
+            total_time = end_time - start_time
+            avg_time = total_time / 10
+            
+            print(f"   ⏱️  Average time: {avg_time*1000:.2f}ms")
+            print(f"   🚀 FPS equivalent: {1/avg_time:.1f}")
+            
+            # Check result quality
+            if result is not None and result.shape == test_image.shape:
+                print(f"   ✅ Result valid: {result.shape}")
+            else:
+                print(f"   ❌ Result invalid: {result.shape if result is not None else 'None'}")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ Neural Style Effect test failed: {e}")
+        return False
+
 def test_manual_implementations():
     """Test manual implementations for comparison."""
     print("\n🔧 Testing Manual Implementations for Comparison")
@@ -237,6 +341,8 @@ def main():
     results.append(("Basic Cartoon", test_cartoon_effect()))
     results.append(("Advanced Cartoon", test_advanced_cartoon_effect()))
     results.append(("Pencil Sketch", test_pencil_sketch_effect()))
+    results.append(("Watercolor", test_watercolor_effect()))
+    results.append(("Neural Style", test_neural_style_effect()))
     
     # Test manual implementations
     test_manual_implementations()

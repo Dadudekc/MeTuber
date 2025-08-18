@@ -85,7 +85,7 @@ class WatercolorEffectPlugin(EffectPlugin):
         }
     
     def apply(self, frame, parameters: Optional[Dict[str, Any]] = None):
-        """Apply the watercolor effect to a frame."""
+        """Apply the watercolor effect to a frame with performance optimization."""
         if parameters is None:
             parameters = self.parameters
         
@@ -97,30 +97,37 @@ class WatercolorEffectPlugin(EffectPlugin):
         texture_overlay = parameters.get('texture_overlay', True)
         texture_strength = parameters.get('texture_strength', 0.3)
         
+        # PERFORMANCE: Cap expensive parameters for real-time use
+        sigma_s = min(sigma_s, 80)  # Cap spatial sigma for performance
+        
+        # PERFORMANCE: Use smaller sigma values for better performance
+        if sigma_s > 50:
+            sigma_s = 50  # Reduce for real-time use
+        
         # Apply stylization using OpenCV's stylization function
         watercolor = cv2.stylization(frame, sigma_s=sigma_s, sigma_r=sigma_r)
         
-        # Apply color intensity
+        # Apply color intensity (optimized)
         if color_intensity != 1.0:
             watercolor = np.clip(watercolor * color_intensity, 0, 255).astype(np.uint8)
         
-        # Preserve edges if enabled
-        if edge_preservation < 1.0:
+        # PERFORMANCE: Preserve edges only if significant preservation requested
+        if edge_preservation > 0.3:
             watercolor = self._preserve_edges(frame, watercolor, edge_preservation)
         
-        # Add texture overlay if enabled
-        if texture_overlay and texture_strength > 0:
+        # PERFORMANCE: Add texture overlay only if enabled and strength is significant
+        if texture_overlay and texture_strength > 0.1:
             watercolor = self._add_watercolor_texture(watercolor, texture_strength)
         
         return watercolor
     
     def _preserve_edges(self, original, processed, preservation):
-        """Preserve edges from original image."""
-        # Extract edges from original
+        """Preserve edges from original image with performance optimization."""
+        # PERFORMANCE: Use smaller Canny thresholds for speed
         gray_original = cv2.cvtColor(original, cv2.COLOR_BGR2GRAY)
-        edges = cv2.Canny(gray_original, 50, 150)
+        edges = cv2.Canny(gray_original, 30, 100)  # Reduced thresholds
         
-        # Dilate edges for better visibility
+        # PERFORMANCE: Use smaller kernel for dilation
         kernel = np.ones((2, 2), np.uint8)
         edges = cv2.dilate(edges, kernel, iterations=1)
         
@@ -131,13 +138,18 @@ class WatercolorEffectPlugin(EffectPlugin):
         return result
     
     def _add_watercolor_texture(self, frame, strength):
-        """Add watercolor paper texture."""
+        """Add watercolor paper texture with performance optimization."""
         height, width = frame.shape[:2]
         
-        # Generate watercolor paper texture
-        texture = np.random.rand(height, width, 3) * strength * 50
+        # PERFORMANCE: Generate smaller texture and resize for large images
+        if width > 640:  # Only optimize for large images
+            small_height, small_width = max(1, height // 4), max(1, width // 4)
+            small_texture = np.random.rand(small_height, small_width, 3) * strength * 50
+            texture = cv2.resize(small_texture, (width, height), interpolation=cv2.INTER_LINEAR)
+        else:
+            # Generate full texture for small images
+            texture = np.random.rand(height, width, 3) * strength * 50
         
-        # Blend texture with frame
-        result = np.clip(frame + texture, 0, 255).astype(np.uint8)
-        
-        return result 
+        # Blend texture with frame (optimized)
+        result = cv2.add(frame, texture.astype(np.uint8))
+        return np.clip(result, 0, 255).astype(np.uint8) 
