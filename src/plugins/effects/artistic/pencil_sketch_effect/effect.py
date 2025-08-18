@@ -73,7 +73,7 @@ class PencilSketchEffectPlugin(EffectPlugin):
         }
     
     def apply(self, frame, parameters: Optional[Dict[str, Any]] = None):
-        """Apply the pencil sketch effect to a frame."""
+        """Apply the pencil sketch effect to a frame with performance optimization."""
         if parameters is None:
             parameters = self.parameters
         
@@ -84,17 +84,23 @@ class PencilSketchEffectPlugin(EffectPlugin):
         paper_texture = parameters.get('paper_texture', True)
         texture_strength = parameters.get('texture_strength', 0.3)
         
-        # Ensure blur intensity is odd
+        # PERFORMANCE: Ensure blur intensity is odd and capped for performance
         if blur_intensity % 2 == 0:
             blur_intensity += 1
+        blur_intensity = min(blur_intensity, 25)  # Cap at 25 for performance
+        
+        # PERFORMANCE: Use smaller blur for better performance when possible
+        if blur_intensity > 15:
+            blur_intensity = 15  # Cap at 15 for real-time use
         
         # Convert to grayscale
         gray_image = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         
-        # Apply contrast adjustment
-        gray_image = np.clip(gray_image * contrast, 0, 255).astype(np.uint8)
+        # Apply contrast adjustment (optimized)
+        if contrast != 1.0:
+            gray_image = np.clip(gray_image * contrast, 0, 255).astype(np.uint8)
         
-        # Create inverted blurred image
+        # PERFORMANCE: Create inverted blurred image with optimized blur
         inverted_image = 255 - gray_image
         blurred = cv2.GaussianBlur(inverted_image, (blur_intensity, blur_intensity), 0)
         inverted_blurred = 255 - blurred
@@ -102,26 +108,37 @@ class PencilSketchEffectPlugin(EffectPlugin):
         # Create pencil sketch effect
         pencil_sketch = cv2.divide(gray_image, inverted_blurred, scale=256.0)
         
-        # Apply line thickness
+        # Apply line thickness (optimized)
         if line_thickness > 1:
-            kernel = np.ones((line_thickness, line_thickness), np.uint8)
+            kernel_size = min(line_thickness, 3)  # Cap at 3 for performance
+            kernel = np.ones((kernel_size, kernel_size), np.uint8)
             pencil_sketch = cv2.erode(pencil_sketch, kernel, iterations=1)
         
-        # Add paper texture if enabled
-        if paper_texture and texture_strength > 0:
+        # PERFORMANCE: Add paper texture only if enabled and strength is significant
+        if paper_texture and texture_strength > 0.1:
             pencil_sketch = self._add_paper_texture(pencil_sketch, texture_strength)
         
         # Convert back to BGR
         return cv2.cvtColor(pencil_sketch, cv2.COLOR_GRAY2BGR)
     
     def _add_paper_texture(self, sketch, strength):
-        """Add paper texture to the sketch."""
+        """Add paper texture to the sketch with performance optimization."""
+        # PERFORMANCE: Use smaller texture for better performance
+        if strength < 0.2:
+            return sketch  # Skip texture for very low strength
+        
         height, width = sketch.shape
         
-        # Generate paper texture
-        texture = np.random.rand(height, width) * strength * 255
+        # PERFORMANCE: Generate smaller texture and resize for better performance
+        if width > 640:  # Only generate texture for large images
+            # Generate smaller texture and resize
+            small_height, small_width = max(1, height // 4), max(1, width // 4)
+            small_texture = np.random.rand(small_height, small_width) * strength * 255
+            texture = cv2.resize(small_texture, (width, height), interpolation=cv2.INTER_LINEAR)
+        else:
+            # Generate full texture for small images
+            texture = np.random.rand(height, width) * strength * 255
         
-        # Blend texture with sketch
-        result = np.clip(sketch + texture, 0, 255).astype(np.uint8)
-        
-        return result 
+        # Blend texture with sketch (optimized)
+        result = cv2.add(sketch, texture.astype(np.uint8))
+        return np.clip(result, 0, 255).astype(np.uint8) 

@@ -171,12 +171,17 @@ class AdvancedCartoonEffectPlugin(EffectPlugin):
     def _apply_cartoon_effect(self, frame, intensity, smoothness, color_mode, 
                              custom_color, color_saturation, ai_edge_detection, 
                              edge_sensitivity, edge_thickness):
-        """Apply the core cartoon effect."""
-        # Convert to float for processing
-        frame_float = frame.astype(np.float32) / 255.0
+        """Apply the core cartoon effect with performance optimization."""
+        # PERFORMANCE: Use uint8 instead of float32 for better performance
+        frame_uint8 = frame.astype(np.uint8)
         
-        # Apply bilateral filter for smoothing
-        smoothed = cv2.bilateralFilter(frame_float, 9, 75 * smoothness, 75 * smoothness)
+        # Apply bilateral filter for smoothing (optimized)
+        blur_size = max(3, int(9 * smoothness))
+        if blur_size % 2 == 0:
+            blur_size += 1
+        blur_size = min(blur_size, 15)  # Cap for performance
+        
+        smoothed = cv2.bilateralFilter(frame_uint8, blur_size, 75 * smoothness, 75 * smoothness)
         
         # Apply color processing based on mode
         if color_mode == 'Monochrome':
@@ -184,41 +189,50 @@ class AdvancedCartoonEffectPlugin(EffectPlugin):
             gray = cv2.cvtColor(smoothed, cv2.COLOR_BGR2GRAY)
             result = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
         elif color_mode == 'Custom':
-            # Apply custom color
-            custom_color_array = np.array([custom_color['b'], custom_color['g'], custom_color['r']]) / 255.0
-            result = smoothed * custom_color_array
+            # Apply custom color (optimized)
+            custom_color_array = np.array([custom_color['b'], custom_color['g'], custom_color['r']], dtype=np.uint8)
+            result = cv2.multiply(smoothed, custom_color_array)
         else:  # Auto mode
-            # Apply saturation adjustment
+            # Apply saturation adjustment (optimized)
             hsv = cv2.cvtColor(smoothed, cv2.COLOR_BGR2HSV)
-            hsv[:, :, 1] = np.clip(hsv[:, :, 1] * color_saturation, 0, 1)
+            hsv = hsv.astype(np.float32)
+            hsv[:, :, 1] = np.clip(hsv[:, :, 1] * color_saturation, 0, 255)
+            hsv = hsv.astype(np.uint8)
             result = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
         
-        # Apply edge detection
+        # Apply edge detection with performance optimization
         if ai_edge_detection:
-            # Use Canny edge detection
+            # PERFORMANCE: Use optimized Canny edge detection
             gray = cv2.cvtColor(result, cv2.COLOR_BGR2GRAY)
+            
+            # Ensure edge sensitivity is valid
+            edge_sensitivity = max(10, min(edge_sensitivity, 200))
+            
             edges = cv2.Canny(gray, edge_sensitivity, edge_sensitivity * 2)
             
-            # Dilate edges for thickness
-            kernel = np.ones((edge_thickness, edge_thickness), np.uint8)
-            edges = cv2.dilate(edges, kernel, iterations=1)
+            # Dilate edges for thickness (optimized)
+            if edge_thickness > 1:
+                kernel_size = min(edge_thickness, 5)  # Cap for performance
+                kernel = np.ones((kernel_size, kernel_size), np.uint8)
+                edges = cv2.dilate(edges, kernel, iterations=1)
             
-            # Combine edges with result
+            # Combine edges with result (optimized)
             edges_3d = cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
-            result = np.clip(result - edges_3d * 0.5, 0, 1)
+            result = cv2.subtract(result, cv2.multiply(edges_3d, 0.5))
         else:
-            # Simple edge detection
+            # PERFORMANCE: Use faster Laplacian edge detection
             gray = cv2.cvtColor(result, cv2.COLOR_BGR2GRAY)
-            edges = cv2.Laplacian(gray, cv2.CV_64F)
+            edges = cv2.Laplacian(gray, cv2.CV_8U, ksize=3)
             edges = np.uint8(np.absolute(edges))
             edges_3d = cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
-            result = np.clip(result - edges_3d * 0.3, 0, 1)
+            result = cv2.subtract(result, cv2.multiply(edges_3d, 0.3))
         
-        # Apply intensity
-        result = result * intensity + frame_float * (1 - intensity)
+        # Apply intensity (optimized)
+        if intensity < 1.0:
+            result = cv2.addWeighted(result, intensity, frame_uint8, 1 - intensity, 0)
         
-        # Convert back to uint8
-        return np.clip(result * 255, 0, 255).astype(np.uint8)
+        # Ensure result is valid
+        return np.clip(result, 0, 255).astype(np.uint8)
     
     def _apply_texture_overlay(self, frame, texture_file, opacity):
         """Apply texture overlay to the frame."""
